@@ -106,12 +106,22 @@ const FIELD_LIMITS = {
   landing_path: 100, ab_variant: 10, ab_test: 60
 };
 
+const ATTR_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid'];
+// Attribution et compteur : jamais de courriel, de numéro de téléphone ni de balisage.
+export function attrSafe(v) {
+  if (!v) return true;
+  if (/[<>{}@]/.test(v)) return false;
+  if (/(?:\(\d{3}\)|\b\d{3}[\s.-]\d{3}[\s.-]\d{4}\b)/.test(v)) return false;
+  return true;
+}
+
 export function validateLead(input) {
   const clean = {};
   for (const [k, max] of Object.entries(FIELD_LIMITS)) {
     const v = typeof input[k] === 'string' ? input[k].trim().slice(0, max) : '';
     clean[k] = v.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '');
   }
+  for (const k of ATTR_KEYS) if (!attrSafe(clean[k])) clean[k] = '';
   const errors = [];
   if (clean['nom_et_prénom'].length < 2) errors.push('nom');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean['email_'])) errors.push('courriel');
@@ -186,13 +196,14 @@ async function handleLead(request, env, ctx, url) {
     qa: input.qa === '1' || /(?:^|[?&])(?:dc_qa=1|dc_variant=)/.test(request.headers.get('referer') || '') ? 1 : 0
   });
 
-  if (spam) { ctx.waitUntil(record(env, { ...ev, kind: 'lead_spam' })); return json({ ok: true }); }
+  // Robot : réponse neutre, aucune conversion côté navigateur.
+  if (spam) { ctx.waitUntil(record(env, { ...ev, kind: 'lead_spam' })); return json({ ok: true, accepted: false }); }
   if (errors.length) return json({ ok: false, error: 'validation', fields: errors }, 422);
 
   if (!env.GHL_WEBHOOK_URL) {
     if (env.LEAD_DRY_RUN === '1') {
       ctx.waitUntil(record(env, { ...ev, kind: 'lead_dry_run', qa: 1 }));
-      return json({ ok: true, dryRun: true });
+      return json({ ok: true, accepted: false, dryRun: true });
     }
     ctx.waitUntil(record(env, { ...ev, kind: 'lead_error' }));
     return json({ ok: false, error: 'not_configured' }, 503);
@@ -205,22 +216,23 @@ async function handleLead(request, env, ctx, url) {
   };
   const isJson = page.webhookFormat === 'json';
   const body = isJson ? JSON.stringify(buildWebhookJson(clean, meta)) : buildWebhookBody(clean, meta);
+  // Un seul envoi, sans relance automatique (une relance après une réponse perdue créerait un doublon CRM).
   let ok = false, status = 0;
-  for (let attempt = 0; attempt < 2 && !ok; attempt++) {
-    try {
-      const r = await fetch(env.GHL_WEBHOOK_URL, {
-        method: 'POST', body,
-        headers: { 'content-type': isJson ? 'application/json' : 'application/x-www-form-urlencoded' }
-      });
-      status = r.status; ok = r.ok;
-    } catch (e) { status = 0; }
-  }
+  try {
+    const r = await fetch(env.GHL_WEBHOOK_URL, {
+      method: 'POST', body,
+      headers: { 'content-type': isJson ? 'application/json' : 'application/x-www-form-urlencoded' },
+      signal: AbortSignal.timeout(10000)
+    });
+    status = r.status; ok = r.ok;
+  } catch (e) { status = 0; }
   ctx.waitUntil(record(env, { ...ev, kind: ok ? 'lead' : 'lead_error' }));
   if (!ok) {
     console.error('ghl_webhook_failed', status);
     return json({ ok: false, error: 'upstream' }, 502);
   }
-  return json({ ok: true });
+  // accepted:true = acceptée par le relais de production ; qa:true = test interne (aucune conversion).
+  return json({ ok: true, accepted: true, qa: ev.qa === 1 });
 }
 
 // ---------------------------------------------------------------- Compteur interne
@@ -239,7 +251,7 @@ async function handleEvent(request, env, ctx) {
   return new Response(null, { status: 204 });
 }
 
-function str(v, max = 120) { return typeof v === 'string' ? v.slice(0, max).replace(/[^\w.\-:/ @+%]/g, '') : ''; }
+function str(v, max = 120) { if (typeof v !== 'string' || !attrSafe(v)) return ''; return v.slice(0, max).replace(/[^\w.\-:/ +%]/g, ''); }
 
 export function sourceOf({ us, c, r }) {
   if (us) return us.toLowerCase();

@@ -17,8 +17,10 @@
   // Aperçus (?dc_variant=…) et tests internes (?dc_qa=1) : exclus des statistiques.
   var QA = /(?:^|[?&])(?:dc_qa=1|dc_variant=)/.test(w.location.search);
 
+  // Attribution : valeurs bornées, jamais de courriel ni de numéro de téléphone.
   function safe(value) {
-    if (!value || value.length > 250 || /[<>\r\n{}]/.test(value)) return '';
+    if (!value || value.length > 250 || /[<>\r\n{}@]/.test(value)) return '';
+    if (/(?:\(\d{3}\)|\b\d{3}[\s.-]\d{3}[\s.-]\d{4}\b)/.test(value)) return '';
     return value;
   }
 
@@ -141,7 +143,7 @@
       body: JSON.stringify(data),
       credentials: 'same-origin'
     }).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok && j && j.ok, j: j }; });
+      return r.json().catch(function () { return {}; }).then(function (j) { return { ok: !!(r.ok && j && j.ok), j: j || {} }; });
     }).then(function (res) {
       if (!res.ok) throw new Error('rejected');
       var confirmation = d.getElementById('dc-success');
@@ -151,7 +153,8 @@
         confirmation.focus({ preventScroll: true });
         confirmation.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
-      signalSuccess(eventId);
+      // Conversion seulement si le relais de production a accepté (ni robot, ni dry run, ni test interne).
+      if (res.j.accepted === true && !res.j.dryRun && !res.j.qa && !QA) signalSuccess(eventId);
     }).catch(function () {
       showError(true);
     }).then(function () {

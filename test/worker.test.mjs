@@ -74,3 +74,35 @@ test('test de deux proportions', () => {
   assert.ok(twoProportion(5, 100, 6, 100).pValue > 0.5);
   assert.equal(twoProportion(0, 0, 1, 10), null);
 });
+
+// ---------------------------------------------------------------- Correctifs CMO du 1er octobre 2026 (même code que Confort)
+import worker, { attrSafe } from '../src/worker.js';
+const ctx = { waitUntil() {} };
+const lead = (extra = {}) => new Request('https://chez.votredentisterie.com/api/lead', {
+  method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ 'nom_et_prénom': 'Test QA', email_: 'qa@example.com', 'numéro_de_téléphone': '4505550100', landing_path: '/', ab_variant: 'a', ...extra })
+});
+async function withFetch(impl, fn) { const real = globalThis.fetch; globalThis.fetch = impl; try { return await fn(); } finally { globalThis.fetch = real; } }
+
+test('un seul envoi au webhook, même en cas d’échec', async () => {
+  let n = 0;
+  const r = await withFetch(async () => { n++; throw new Error('perdu'); }, () => worker.fetch(lead(), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
+  assert.equal(n, 1); assert.equal(r.status, 502);
+});
+
+test('accepted seulement pour le relais de production; jamais pour robot ou dry run', async () => {
+  const ok = await withFetch(async () => new Response('{}'), () => worker.fetch(lead(), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
+  assert.deepEqual(await ok.json(), { ok: true, accepted: true, qa: false });
+  const qa = await withFetch(async () => new Response('{}'), () => worker.fetch(lead({ qa: '1' }), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
+  assert.deepEqual(await qa.json(), { ok: true, accepted: true, qa: true });
+  let n = 0;
+  const spam = await withFetch(async () => { n++; return new Response(''); }, () => worker.fetch(lead({ website: 'x' }), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
+  assert.deepEqual(await spam.json(), { ok: true, accepted: false }); assert.equal(n, 0);
+  const dry = await worker.fetch(lead(), { LEAD_DRY_RUN: '1' }, ctx);
+  assert.deepEqual(await dry.json(), { ok: true, accepted: false, dryRun: true });
+});
+
+test('attribution : aucune coordonnée personnelle', () => {
+  assert.equal(attrSafe('marie@example.com'), false); assert.equal(attrSafe('450-555-1234'), false);
+  assert.equal(attrSafe('dentiste iberville'), true); assert.equal(attrSafe('120212345678901234'), true);
+});
