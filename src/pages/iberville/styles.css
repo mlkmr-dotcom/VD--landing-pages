@@ -60,7 +60,12 @@ button.btn:disabled{opacity:.6;cursor:wait}
 .offer{padding:72px 0 64px}
 .offer h2{font-size:clamp(30px,3.4vw,44px);margin-bottom:14px}
 .offer .price{color:var(--sage-dk);white-space:nowrap}
+.offer .reg{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 14px;margin:0 0 16px}
+.offer .was{color:var(--muted);font-size:17px}
+.offer .was s{text-decoration-thickness:1.5px;text-decoration-color:var(--slate)}
+.offer .save{background:var(--mint);color:var(--slate-dk);font-weight:600;font-size:14px;padding:6px 14px;border-radius:999px}
 .offer .fine{color:var(--muted);font-size:15px;margin:0 auto 28px;max-width:60ch}
+.offer .codes{color:var(--muted);font-size:12.5px;line-height:1.5;margin:22px auto 0;max-width:72ch;opacity:.85}
 
 /* Clinique */
 .clinic{padding-top:0}
