@@ -1,0 +1,20 @@
+/* Variante B — ajouts seulement : barre d'action fixe + numéro sous le bouton du haut de page. */
+.dc-actionbar{position:fixed;left:0;right:0;bottom:0;z-index:9000;display:flex;gap:10px;justify-content:center;align-items:center;
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);
+  box-shadow:0 -6px 24px rgba(47,51,66,.14);font:600 16px/20px var(--sans);transition:transform .25s ease,opacity .25s ease}
+.dc-actionbar[data-hidden="true"]{transform:translateY(120%);opacity:0;pointer-events:none}
+.dc-actionbar a{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border-radius:30px;text-decoration:none;white-space:nowrap}
+.dc-actionbar .dc-ab-call{flex:0 1 42%;color:var(--slate);background:#fff;border:1.5px solid var(--slate)}
+.dc-actionbar .dc-ab-book{flex:1 1 58%;color:#fff;background:var(--slate);border:1.5px solid var(--slate)}
+.dc-actionbar svg{width:18px;height:18px;flex:none}
+.dc-actionbar .dc-ab-num{display:none}
+@media (max-width:900px){body{padding-bottom:calc(70px + env(safe-area-inset-bottom))}}
+@media (min-width:901px){
+  .dc-actionbar{left:50%;right:auto;bottom:24px;transform:translate(-50%,0);border-radius:40px;padding:10px;box-shadow:0 10px 30px rgba(47,51,66,.22)}
+  .dc-actionbar[data-hidden="true"]{transform:translate(-50%,140%)}
+  .dc-actionbar a{flex:none;padding:0 24px}
+  .dc-actionbar .dc-ab-num{display:inline}
+}
+.hero-phone{color:#fff;font:500 16px/1.4 var(--sans);text-decoration:underline;text-underline-offset:3px;align-self:flex-start}
+.hero-phone:hover{color:var(--mint)}
+@media (prefers-reduced-motion:reduce){.dc-actionbar{transition:none}}

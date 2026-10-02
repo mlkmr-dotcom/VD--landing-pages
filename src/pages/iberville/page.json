@@ -1,0 +1,88 @@
+{
+  "path": "/",
+  "slug": "iberville",
+  "pageId": "vd-iberville-general",
+  "pageName": "VD Iberville — Dentisterie générale",
+  "language": "fr-CA",
+  "title": "Dentiste à Iberville (Saint-Jean-sur-Richelieu) | Votre Dentisterie",
+  "description": "Clinique dentaire à Iberville pour toute la famille. Nettoyage et examen à 260 $, régime canadien accepté, 4,8/5 sur Google. Prenez rendez-vous.",
+  "robots": "noindex, nofollow",
+  "canonicalUrl": "https://chez.votredentisterie.com/",
+  "og": {
+    "type": "website",
+    "title": "Votre Dentisterie Iberville — une équipe qui prend le temps",
+    "description": "Nettoyage et examen dentaire à 260 $ pour les nouveaux patients. Régime canadien accepté.",
+    "image": "https://chez.votredentisterie.com/assets/iberville/hero-1600.jpg",
+    "url": "https://chez.votredentisterie.com/"
+  },
+  "phone": {
+    "display": "450 346-0102",
+    "href": "tel:+14503460102"
+  },
+  "address": {
+    "line1": "707, boulevard d’Iberville",
+    "line2": "Saint-Jean-sur-Richelieu (Québec) J2X 3Z8",
+    "maps": "https://maps.google.com/?cid=11774873881471435114"
+  },
+  "google": {
+    "rating": "4,8",
+    "count": "76",
+    "checked": "2026-10-02",
+    "url": "https://maps.google.com/?cid=11774873881471435114"
+  },
+  "hours": [
+    [
+      "Lundi",
+      "9 h à 20 h"
+    ],
+    [
+      "Mardi",
+      "9 h à 17 h"
+    ],
+    [
+      "Mercredi",
+      "9 h à 17 h"
+    ],
+    [
+      "Jeudi",
+      "9 h à 20 h"
+    ],
+    [
+      "Vendredi",
+      "9 h à 17 h"
+    ],
+    [
+      "Samedi",
+      "Fermé"
+    ],
+    [
+      "Dimanche",
+      "Fermé"
+    ]
+  ],
+  "tracking": {
+    "gtm": "GTM-M29KWPM"
+  },
+  "test": {
+    "id": "vd-iberville-2026-10",
+    "cookie": "vd_ab_iberville",
+    "variants": {
+      "a": 50,
+      "b": 50
+    },
+    "notes": "A = nouvelle page sur la structure gagnante de Confort (variante D). B = A + barre d'action fixe + numéro sous le bouton du haut de page."
+  },
+  "toValidate": [
+    "Prix 260 $ et inclusions (repris de la page actuelle) ; ajouter une « valeur de X $ » seulement si elle est vérifiée",
+    "Numéro unique 450 346-0102 (la page actuelle mélange 450 305-6505 et 450 346-0102)",
+    "Dentistes présentés : Dr Duy K. Nguyen, Dre Malisa Chin, Dre Afnane Ourraiss",
+    "Financement Dentoplan offert à Iberville",
+    "Consultation initiale sans frais de 30 minutes (reprise de la page actuelle)",
+    "Nom de la personne responsable de la protection des renseignements personnels (page /confidentialite)",
+    "Photos du tournage de mai 2023 (accueil, radiographie, scanner, explications) : confirmer qu’elles ont été prises à Iberville et que les personnes visibles y travaillent encore (le dentiste du scanner n’est pas l’un des 3 dentistes présentés)"
+  ],
+  "photos": {
+    "Photoshoot Octobre 2025 (Photos Iberville 2025)": "équipe (236A3213v2), Dr Nguyen (236A3121), Dre Chin (236A3283v2), Dre Ourraiss (236A3158)",
+    "Photoshoot 5 mai 2023": "haut de page (VD still_008), scanner (still_005), explications (still_004), accueil (still_010)"
+  }
+}

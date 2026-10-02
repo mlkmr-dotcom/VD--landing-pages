@@ -1,0 +1,30 @@
+{
+  // Worker des landing pages de Votre Dentisterie Iberville — chez.votredentisterie.com
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vd-landing-pages",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "vd-lp-analytics",
+      "database_id": "REMPLACER_PAR_L_ID_D1",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "TEST_START": "2026-10-13",
+    "LEAD_DRY_RUN": "0"
+  },
+  // Secrets (wrangler secret put …) : GHL_WEBHOOK_URL, STATS_KEY, VISITOR_SALT
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": { "enabled": true }
+  // À la bascule seulement (après accord de Malek) :
+  // "routes": [{ "pattern": "chez.votredentisterie.com", "custom_domain": true }]
+}
