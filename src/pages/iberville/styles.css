@@ -38,8 +38,8 @@ button.btn:disabled{opacity:.6;cursor:wait}
 
 /* Logo (fichier officiel ; couleurs selon le fond) */
 .vd-logo{display:block;width:180px;height:auto}
-.vd-logo .la{fill:var(--slate)} .vd-logo .lb{fill:var(--sage)}
-.hero .vd-logo .la{fill:#fff} .hero .vd-logo .lb{fill:var(--mint)}
+.vd-logo .la{fill:var(--slate)} .vd-logo .lb{fill:var(--sage)} .vd-logo .lc{fill:var(--mint)}
+.hero .vd-logo .la{fill:#fff} .hero .vd-logo .lb,.hero .vd-logo .lc{fill:var(--mint)}
 
 /* Héros */
 .hero{background:var(--slate);color:#fff;overflow:hidden}
@@ -123,18 +123,35 @@ button.btn:disabled{opacity:.6;cursor:wait}
 .initials{width:42px;height:42px;border-radius:50%;background:var(--mint);color:var(--slate);display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
 
 /* Contact / formulaire */
-.contact{background:var(--ice)}
-.contact-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:56px;align-items:start}
-.contact-copy p{color:var(--muted);margin-bottom:16px}
-.arrival{margin:30px 0 0}
-.arrival img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:18px}
-.arrival figcaption{margin-top:10px;color:var(--muted);font-size:15px}
-.arrival figcaption a{color:var(--sage-dk)}
-.contact-copy .call{color:var(--ink);font-weight:600;margin:26px 0 12px}
-.hours{margin-top:36px;background:#fff;border-radius:18px;padding:22px 24px}
-.hours h3{color:var(--slate);margin-bottom:10px}
-.hours dl{display:grid;grid-template-columns:auto 1fr;gap:6px 22px;margin:0;font-size:15.5px}
-.hours dt{color:var(--muted)} .hours dd{margin:0;font-weight:500}
+/* ---- Accueil et contact : bande de marque, photo de la réception fondue dans l'ardoise, texte sur ardoise uni ---- */
+.contact{background:var(--slate);color:#fff;padding:0}
+.contact-band{background:linear-gradient(#fff,var(--ice));text-align:center;padding:76px 24px 72px}
+.contact-band .eyebrow{font:600 13px/1.2 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--sage-dk);margin:0 0 14px}
+.contact-band .vision{font:400 clamp(28px,3.2vw,44px)/1.16 var(--serif);color:var(--slate);max-width:20ch;margin:0 auto}
+.contact-body{position:relative;padding-bottom:96px}
+.contact-photo{position:relative;height:520px;overflow:hidden}
+.contact-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 32%;filter:saturate(.68) brightness(.94)}
+.contact-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(86,91,110,0) 48%,rgba(86,91,110,.8) 82%,var(--slate) 100%)}
+.contact-grid{position:relative;display:grid;grid-template-columns:1fr 1.05fr;gap:72px;align-items:start;margin-top:-150px}
+.contact-copy{padding-top:178px}
+.contact h2{color:#fff;font-size:clamp(30px,3.2vw,44px);margin-bottom:16px}
+.contact-copy p{color:rgba(255,255,255,.88);font-size:18px;margin-bottom:16px;max-width:44ch}
+.contact-copy .call{color:var(--mint);font-weight:600;font-size:15px;margin:24px 0 12px}
+.btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.85)}
+.btn-ghost:hover{background:#fff;color:var(--slate)}
+.hours{margin-top:30px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:22px 24px;max-width:430px}
+.hours h3{color:#fff;margin-bottom:10px;font:600 18px/1.3 var(--sans)}
+.hours dl{display:grid;grid-template-columns:1fr auto;gap:6px 22px;margin:0;font-size:15.5px}
+.hours dt{color:rgba(255,255,255,.75)} .hours dd{margin:0;font-weight:500;color:#fff;text-align:right}
+.contact-copy .addr{font-size:14px;margin-top:18px}
+.contact-copy .addr a{color:rgba(255,255,255,.75);text-decoration-color:rgba(255,255,255,.35)}
+.contact .form-card{color:var(--ink);box-shadow:0 24px 60px rgba(30,33,46,.28)}
+/* Option B : la photo occupe la colonne de gauche, le formulaire est sur l'ardoise uni */
+.contact--b .contact-photo{position:absolute;left:0;top:0;width:50%;height:470px}
+.contact--b .contact-photo img{transform:scale(1.45);transform-origin:50% 22%}
+.contact--b .contact-photo::after{background:linear-gradient(180deg,rgba(86,91,110,0) 52%,rgba(86,91,110,.85) 84%,var(--slate) 100%),linear-gradient(90deg,rgba(86,91,110,0) 70%,var(--slate) 100%)}
+.contact--b .contact-grid{margin-top:0;padding-top:72px}
+.contact--b .contact-copy{padding-top:392px}
 .form-card{background:#fff;border-radius:var(--radius);padding:34px;box-shadow:0 10px 30px rgba(86,91,110,.10);position:relative}
 .field{margin-bottom:18px}
 .field label{display:block;font-weight:600;font-size:15px;margin-bottom:7px}
@@ -148,11 +165,11 @@ button.btn:disabled{opacity:.6;cursor:wait}
 .success p{color:var(--muted);margin-bottom:22px}
 
 /* Pied de page */
-.site-footer{background:var(--slate);color:#E7EBF0;padding:44px 0;font-size:15px}
+.site-footer{background:#3B3F4D;color:#E7EBF0;padding:44px 0;font-size:15px}
 .footer-grid{display:grid;grid-template-columns:auto 1fr 1fr auto;gap:32px;align-items:center}
 .site-footer a{color:#fff;text-decoration:none}
 .site-footer .vd-logo{width:140px}
-.site-footer .vd-logo .la{fill:#fff} .site-footer .vd-logo .lb{fill:var(--mint)}
+.site-footer .vd-logo .la{fill:#fff} .site-footer .vd-logo .lb,.site-footer .vd-logo .lc{fill:var(--mint)}
 .legal{font-size:13px;color:#C9D0DA}
 
 /* Mobile */
@@ -170,8 +187,12 @@ button.btn:disabled{opacity:.6;cursor:wait}
   .access{background:var(--ice)}
   .grid-services{grid-template-columns:1fr}
   .grid-services>div{border-right:0!important}
-  .contact-grid{grid-template-columns:1fr;gap:30px}
-  .arrival{display:none}
+  .contact-grid,.contact--b .contact-grid{grid-template-columns:1fr;gap:30px;margin-top:-40px;padding-top:0}
+  .contact-copy,.contact--b .contact-copy{padding-top:0}
+  .contact-photo,.contact--b .contact-photo{position:relative;width:100%;height:320px}
+  .contact--b .contact-photo img{transform:none}
+  .contact-band{padding:56px 22px 52px}
+  .contact-body{padding-bottom:64px}
   .form-card{padding:24px}
   .footer-grid{grid-template-columns:1fr;gap:16px;text-align:left}
 }

@@ -32,31 +32,15 @@
   },
   "hours": [
     [
-      "Lundi",
+      "Lundi et jeudi",
       "9 h à 20 h"
     ],
     [
-      "Mardi",
+      "Mardi, mercredi et vendredi",
       "9 h à 17 h"
     ],
     [
-      "Mercredi",
-      "9 h à 17 h"
-    ],
-    [
-      "Jeudi",
-      "9 h à 20 h"
-    ],
-    [
-      "Vendredi",
-      "9 h à 17 h"
-    ],
-    [
-      "Samedi",
-      "Fermé"
-    ],
-    [
-      "Dimanche",
+      "Samedi et dimanche",
       "Fermé"
     ]
   ],

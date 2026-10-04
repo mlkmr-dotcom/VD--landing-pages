@@ -153,21 +153,26 @@
   </div>
 </section>
 
-<section class="contact" id="demande">
-  <div class="wrap contact-grid">
+<section class="contact contact--b" id="demande">
+  <div class="contact-band">
+    <p class="eyebrow">Votre clinique à Iberville</p>
+    <p class="vision">Des soins dentaires qui (re)donnent envie de sourire.</p>
+  </div>
+  <div class="contact-body">
+    <div class="contact-photo" aria-hidden="true">
+      <picture><source type="image/webp" srcset="/assets/iberville/accueil-1920.webp"><img src="/assets/iberville/accueil-1920.jpg" width="1920" height="1080" loading="lazy" alt=""></picture>
+    </div>
+    <div class="wrap contact-grid">
     <div class="contact-copy">
       <h2>Nous avons hâte de vous voir!</h2>
       <p>Pour un rendez-vous ou une question, remplissez le formulaire. Notre équipe vous recontactera par téléphone ou par courriel.</p>
       <p class="call">Ou appelez-nous au :</p>
-      <a class="btn btn-outline" href="{{PHONE_HREF}}" data-dc-action="phone">{{PHONE_DISPLAY}}</a>
+      <a class="btn btn-ghost" href="{{PHONE_HREF}}" data-dc-action="phone">{{PHONE_DISPLAY}}</a>
       <div class="hours">
         <h3>Heures d’ouverture</h3>
         <dl>{{HOURS}}</dl>
       </div>
-      <figure class="arrival">
-        <picture><source type="image/webp" srcset="/assets/iberville/accueil-900.webp"><img src="/assets/iberville/accueil-900.jpg" width="900" height="600" loading="lazy" alt="L’accueil de la clinique, avec le logo Votre Dentisterie au mur"></picture>
-        <figcaption>Notre accueil · <a href="{{MAPS}}" target="_blank" rel="noopener noreferrer">{{ADDRESS1}}</a></figcaption>
-      </figure>
+      <p class="addr"><a href="{{MAPS}}" target="_blank" rel="noopener noreferrer">{{ADDRESS1}}, {{ADDRESS2}}</a></p>
     </div>
     <div class="form-card">
       <form id="dc-form" data-dc-mcp-form="general" action="/api/lead" method="post" aria-label="Demander un rendez-vous">
@@ -186,6 +191,7 @@
         <button class="btn btn-outline" type="button" data-dc-new-request>Faire une autre demande</button>
       </div>
     </div>
+  </div>
   </div>
 </section>
 </main>
