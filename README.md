@@ -2,6 +2,8 @@
 
 Remplace la page Unbounce de Votre Dentisterie Iberville. Hébergement : un Worker Cloudflare relié à ce dépôt GitHub (construction et déploiement automatiques à chaque `push`). Même architecture que `DC--landing-pages` (Dentisterie Confort).
 
+> **Mise en ligne : voir [GUIDE-CMO.md](GUIDE-CMO.md)** (connexion GitHub → Cloudflare, secrets, recette, A/B testing, bascule DNS).
+
 ## Ce qui est en place
 
 | Élément | État |

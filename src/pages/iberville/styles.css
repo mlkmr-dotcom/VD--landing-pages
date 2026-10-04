@@ -42,19 +42,24 @@ button.btn:disabled{opacity:.6;cursor:wait}
 .hero .vd-logo .la{fill:#fff} .hero .vd-logo .lb,.hero .vd-logo .lc{fill:var(--mint)}
 
 /* Héros */
-.hero{background:var(--slate);color:#fff;overflow:hidden}
-.hero-grid{display:grid;grid-template-columns:.92fr 1.08fr;align-items:stretch;min-height:640px;padding:0;max-width:none}
-.hero-copy{padding:56px 48px 64px max(24px,calc((100vw - var(--wrap))/2 + 24px));display:flex;flex-direction:column;justify-content:center;gap:22px}
-.hero-logo{margin-bottom:18px}
+/* En-tête : la photo à droite, un dégradé ardoise passe sous le texte et se fond dans la photo */
+.hero{position:relative;background:var(--slate);color:#fff;overflow:hidden;isolation:isolate}
+.hero::before{content:"";position:absolute;width:900px;height:900px;left:-520px;top:-560px;border-radius:50%;background:var(--mint);opacity:.07;filter:blur(180px);z-index:1;pointer-events:none}
+.hero-photo{position:absolute;top:0;right:0;bottom:0;width:73.6%;z-index:0}
+.hero-photo img{width:100%;height:100%;object-fit:cover;object-position:100% 35%}
+.hero-photo::after{content:"";position:absolute;inset:0;background:rgba(86,91,110,.14)}
+.hero::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,var(--slate) 0%,var(--slate) 33%,rgba(86,91,110,.86) 47%,rgba(86,91,110,.42) 62%,rgba(86,91,110,.08) 78%,rgba(86,91,110,0) 90%),linear-gradient(180deg,rgba(86,91,110,0) 55%,rgba(86,91,110,.45) 100%)}
+.hero-inner{position:relative;z-index:2;min-height:760px;display:flex;align-items:center}
+.hero-copy{padding:84px 0 88px;display:flex;flex-direction:column;gap:26px;max-width:600px}
+.hero-logo{margin-bottom:0}
+.hero-logo .vd-logo{width:208px}
+.hero h1{font-size:clamp(40px,4.45vw,64px);line-height:1.08;color:#fff;max-width:13ch}
+.hero .lead{font-size:20px;line-height:1.55;color:rgba(255,255,255,.86);max-width:34ch}
+.hero .btn{align-self:flex-start}
 .g-badge{align-self:flex-start;display:inline-flex;align-items:center;gap:9px;padding:9px 15px;border-radius:30px;background:#fff;color:var(--ink);
   font:600 14px/1 var(--sans);text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.12)}
 .g-badge .stars,.stars{color:var(--star);letter-spacing:1px}
 .g-badge .stars{font-size:17px}
-.hero h1{font-size:clamp(38px,4.6vw,62px);line-height:1.08;color:#fff;max-width:13ch}
-.hero .lead{font-size:20px;line-height:1.55;color:#E7EBF0;max-width:34ch}
-.hero .btn{align-self:flex-start;margin-top:6px}
-.hero-photo{position:relative;min-height:100%}
-.hero-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:100% 35%}
 
 /* Offre */
 .offer{padding:72px 0 64px}
@@ -153,6 +158,7 @@ button.btn:disabled{opacity:.6;cursor:wait}
 .contact--b .contact-grid{margin-top:0;padding-top:72px}
 .contact--b .contact-copy{padding-top:392px}
 .form-card{background:#fff;border-radius:var(--radius);padding:34px;box-shadow:0 10px 30px rgba(86,91,110,.10);position:relative}
+.form-title{font:400 26px/1.25 var(--serif);color:var(--slate);margin:0 0 20px}
 .field{margin-bottom:18px}
 .field label{display:block;font-weight:600;font-size:15px;margin-bottom:7px}
 .field input,.field textarea{width:100%;font:inherit;font-size:16px;padding:13px 15px;border:1.5px solid #CBD6DB;border-radius:12px;background:#fff;color:var(--ink)}
@@ -174,12 +180,14 @@ button.btn:disabled{opacity:.6;cursor:wait}
 
 /* Mobile */
 @media (max-width:900px){
-  .hero-grid{grid-template-columns:1fr;min-height:0}
-  .hero-copy{padding:36px 24px 40px;gap:18px}
-  .hero-logo{margin-bottom:6px}
+  .hero-photo{left:0;width:100%;bottom:auto;height:430px}
+  .hero-photo img{object-position:90% 30%}
+  .hero::after{background:linear-gradient(180deg,rgba(86,91,110,.85) 0px,rgba(86,91,110,0) 170px,rgba(86,91,110,0) 172px,rgba(86,91,110,.85) 335px,var(--slate) 430px)}
+  .hero-inner{min-height:0;display:block}
+  .hero-copy{padding:22px 0 40px;gap:18px}
+  .hero-logo{margin-bottom:214px}
+  .hero-logo .vd-logo{width:144px}
   .vd-logo{width:150px}
-  .hero-photo{min-height:0;aspect-ratio:16/10}
-  .hero-photo img{object-position:60% center}
   .hero .lead{font-size:18px}
   section{padding:56px 0}
   .clinic-card{grid-template-columns:1fr;padding:26px;gap:26px}
@@ -198,7 +206,6 @@ button.btn:disabled{opacity:.6;cursor:wait}
 }
 @media (max-width:480px){
   .wrap{padding:0 18px}
-  .hero-copy{padding:30px 18px 34px}
   .hero .btn,.offer .btn{width:100%}
   .doc img{aspect-ratio:1/1;object-position:center 20%}
 }

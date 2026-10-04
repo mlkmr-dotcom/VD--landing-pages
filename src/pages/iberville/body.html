@@ -1,7 +1,13 @@
 <div id="vd-page" data-language="fr-CA" data-clinic="VD-IB" data-service="general">
 
 <header class="hero">
-  <div class="wrap hero-grid">
+  <div class="hero-photo" aria-hidden="false">
+    <picture>
+      <source type="image/webp" srcset="/assets/iberville/hero-900.webp 900w, /assets/iberville/hero-1600.webp 1600w" sizes="(max-width: 900px) 100vw, 74vw">
+      <img src="/assets/iberville/hero-1600.jpg" srcset="/assets/iberville/hero-900.jpg 900w, /assets/iberville/hero-1600.jpg 1600w" sizes="(max-width: 900px) 100vw, 74vw" width="1600" height="900" alt="Le Dr Nguyen et une membre de l’équipe expliquent une radiographie à un patient, à la clinique d’Iberville" fetchpriority="high">
+    </picture>
+  </div>
+  <div class="wrap hero-inner">
     <div class="hero-copy">
       <div class="hero-logo">{{LOGO}}</div>
       <a class="g-badge" href="{{G_URL}}" target="_blank" rel="noopener noreferrer" aria-label="Avis Google : {{G_RATING}} sur 5, {{G_COUNT}} avis">
@@ -12,12 +18,6 @@
       <p class="lead">Votre clinique dentaire à Iberville, pour toute la famille. Des soins personnalisés, expliqués à votre rythme, sans jugement.</p>
       <a class="btn btn-light btn-arrow" href="#demande" data-dc-action="appointment">Prendre rendez-vous</a>
       {{HERO_PHONE}}
-    </div>
-    <div class="hero-photo">
-      <picture>
-        <source type="image/webp" srcset="/assets/iberville/hero-900.webp 900w, /assets/iberville/hero-1600.webp 1600w" sizes="(max-width: 800px) 100vw, 50vw">
-        <img src="/assets/iberville/hero-1600.jpg" srcset="/assets/iberville/hero-900.jpg 900w, /assets/iberville/hero-1600.jpg 1600w" sizes="(max-width: 800px) 100vw, 50vw" width="1600" height="900" alt="Une membre de l’équipe et un dentiste expliquent une radiographie à un patient, à la clinique d’Iberville" fetchpriority="high">
-      </picture>
     </div>
   </div>
 </header>
@@ -176,6 +176,7 @@
     </div>
     <div class="form-card">
       <form id="dc-form" data-dc-mcp-form="general" action="/api/lead" method="post" aria-label="Demander un rendez-vous">
+        <h3 class="form-title">Demandez votre rendez-vous</h3>
         <div class="field"><label for="f-name">Nom et prénom <span aria-hidden="true">*</span></label><input id="f-name" name="nom_et_prénom" type="text" autocomplete="name" maxlength="120" required placeholder="Votre nom et prénom"></div>
         <div class="field"><label for="f-email">Courriel <span aria-hidden="true">*</span></label><input id="f-email" name="email_" type="email" autocomplete="email" maxlength="254" required placeholder="vous@courriel.com"></div>
         <div class="field"><label for="f-phone">Téléphone <span aria-hidden="true">*</span></label><input id="f-phone" name="numéro_de_téléphone" type="tel" inputmode="tel" autocomplete="tel" maxlength="40" required placeholder="Votre numéro de téléphone"></div>

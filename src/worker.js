@@ -1,6 +1,7 @@
 // Worker Cloudflare — landing pages de Votre Dentisterie (chez.votredentisterie.com).
 // Rôles : 1) A/B testing par cookie ; 2) relais du formulaire vers le webhook HighLevel ;
 // 3) compteur interne (visites, visiteurs, demandes, clics) ; 4) redirections ; 5) tableau de bord /stats.
+import { ensureSchema } from './schema.js';
 import { PAGES, ALIASES, REDIRECTS, BOT_UA, EVENT_KINDS, SITE, STATIC_PAGES } from './config.js';
 import { renderStats } from './stats.js';
 
@@ -24,7 +25,9 @@ export default {
         return new Response(res.body, { status: res.status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=3600', 'x-robots-tag': 'noindex' } });
       }
 
-      const redirect = REDIRECTS[path] || REDIRECTS[path.replace(/\/+$/, '')];
+      const r0 = REDIRECTS[path] || REDIRECTS[path.replace(/\/+$/, '')];
+      // Redirections vers une autre adresse : actives seulement si REDIRECTS_ENABLED = "1" (après validation).
+      const redirect = r0 && (r0.to.startsWith('/') || env.REDIRECTS_ENABLED === '1') ? r0 : null;
       if (redirect) {
         const target = new URL(redirect.to, url.origin);
         url.searchParams.forEach((v, k) => { if (!target.searchParams.has(k)) target.searchParams.set(k, v); });
@@ -300,6 +303,7 @@ async function visitorHash(env, day, ip, ua) {
 async function record(env, ev) {
   if (!env.DB || ev.bot) return;
   try {
+    await ensureSchema(env.DB);
     const day = localDay(ev.ts);
     const visitor = await visitorHash(env, day, ev._ip, ev._ua);
     await env.DB.prepare(

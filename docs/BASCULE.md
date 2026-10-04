@@ -15,7 +15,7 @@ Aujourd'hui, les demandes de la page Unbounce Iberville **n'arrivent pas dans Hi
 
 1. **Workers & Pages → Créer → Importer un dépôt** : le dépôt GitHub de ce projet, branche `main`.
    - Construction : `npm run build` · Déploiement : `npx wrangler deploy`.
-2. **D1** : créer la base `vd-lp-analytics`, copier son identifiant dans `wrangler.jsonc` (`database_id`), puis `npx wrangler d1 migrations apply vd-lp-analytics --remote`.
+2. **D1** : rien à faire. Wrangler crée la base `vd-lp-analytics` au premier déploiement et le Worker crée sa table à la première visite.
 3. **Secrets** : `GHL_WEBHOOK_URL`, `STATS_KEY` (longue phrase aléatoire), `VISITOR_SALT` (autre chaîne aléatoire).
 4. `TEST_START` (wrangler.jsonc) : mettre la date réelle de bascule.
 5. Vérifier sur le lien `*.workers.dev` : `/`, `/?dc_variant=a`, `/?dc_variant=b`, `/confidentialite`, `/stats?key=…`.

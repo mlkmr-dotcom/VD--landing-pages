@@ -13,13 +13,16 @@
     {
       "binding": "DB",
       "database_name": "vd-lp-analytics",
-      "database_id": "REMPLACER_PAR_L_ID_D1",
       "migrations_dir": "migrations"
+      // Pas de database_id : Wrangler crée la base au premier déploiement (provisionnement automatique),
+      // et le Worker crée la table au premier enregistrement (src/schema.js).
     }
   ],
   "vars": {
     "TEST_START": "2026-10-13",
-    "LEAD_DRY_RUN": "0"
+    "LEAD_DRY_RUN": "0",
+    // Redirections des anciennes pages vers le site principal : "1" seulement après validation de la liste (src/config.js).
+    "REDIRECTS_ENABLED": "0"
   },
   // Secrets (wrangler secret put …) : GHL_WEBHOOK_URL, STATS_KEY, VISITOR_SALT
   "workers_dev": true,

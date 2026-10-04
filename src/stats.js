@@ -1,3 +1,4 @@
+import { ensureSchema } from './schema.js';
 // Tableau de bord /stats?key=... : visites, visiteurs, demandes, taux de conversion par variante,
 // par jour et par source. Lecture seule sur la base D1. Aucune donnée personnelle.
 import { PAGES } from './config.js';
@@ -33,6 +34,7 @@ export async function renderStats(request, env, url) {
   const key = url.searchParams.get('key') || request.headers.get('x-stats-key') || '';
   if (!env.STATS_KEY || !safeEqual(key, env.STATS_KEY)) return new Response('Accès refusé', { status: 403 });
   if (!env.DB) return new Response('Base de statistiques non configurée', { status: 503 });
+  await ensureSchema(env.DB);
 
   const path = PAGES[url.searchParams.get('page')] ? url.searchParams.get('page') : Object.keys(PAGES)[0];
   const page = PAGES[path];
