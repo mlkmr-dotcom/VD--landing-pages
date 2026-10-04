@@ -40,7 +40,7 @@ Note : Claude n'est pas avocat. Les points touchant la Loi 25 méritent une vali
 | D1 | **Bannière de consentement** (`measure.consentBanner`) | **Oui, à la bascule.** | Conformité Loi 25 : témoins d'analyse et de publicité désactivés par défaut, « Tout refuser » aussi visible que « Tout accepter ». En contrepartie, GA4 et Google Ads observent moins de données ; Google modélise une partie des conversions manquantes. Le compteur `/stats` n'est **pas** touché, car il n'utilise aucun témoin : le test A/B reste complet. |
 | D2 | **Microsoft Clarity** (`measure.clarity`) | **Oui**, un projet par site, masquage « Strict ». | Enregistrements de sessions et cartes de chaleur, filtrables par variante. Sans accord, Clarity fonctionne sans témoin (un identifiant par page vue) : les enregistrements restent utiles, sans lien entre deux visites. |
 | D3 | **Critère principal des tests** | « Demandes reçues ÷ visiteurs » maintenant. Ensuite « rendez-vous pris ÷ visiteurs », dès que les étapes HighLevel sont tenues à jour. | Ce qu'on optimise. |
-| D4 | **Suivi des appels par variante** | Oui : un 2e numéro CallRail par site, réservé à la variante B. | Aujourd'hui, `/stats` voit les **clics** sur le numéro, pas les appels aboutis. Une part importante des patients appelle. |
+| D4 | **Suivi des appels par variante** | Oui : un numéro d'attribution HighLevel distinct par variante (A et B) sur chaque site. | Aujourd'hui, `/stats` voit les **clics** sur le numéro, pas les appels aboutis. Une part importante des patients appelle. |
 | D5 | **Conversions hors ligne** (« RDV pris », « patient présent ») vers Google Ads et Meta | Oui. Elles dépendent de D1 pour l'envoi de données de correspondance (courriel/téléphone haché). | Les annonces apprennent à trouver des patients, pas seulement des formulaires. |
 | D6 | **Mode du consentement Google** | Mode « avancé » : les balises envoient des signaux sans témoin quand c'est refusé. C'est ce que fait le code. | Si l'avis juridique exige le mode « de base », le CMO bloque les balises Google dans GTM tant qu'il n'y a pas d'accord. Aucun changement de code. |
 
@@ -52,7 +52,7 @@ Note : Claude n'est pas avocat. Les points touchant la Loi 25 méritent une vali
 | --- | --- | --- | --- |
 | 1. Affaires | **Coût par patient présent**, par campagne. Puis production par campagne, si on peut l'extraire. | Ads + HighLevel | Répartir le budget |
 | 2. Qualité | Rendez-vous pris ÷ demandes. Présents ÷ rendez-vous. Délai de premier contact. | HighLevel | Qualité des leads, suivi par l'équipe |
-| 3. Page | **Demandes reçues ÷ visiteurs** (critère principal). Contacts ÷ visiteurs (demandes + appels). | `/stats` (+ CallRail) | Décider des tests A/B |
+| 3. Page | **Demandes reçues ÷ visiteurs** (critère principal). Contacts ÷ visiteurs (demandes + appels). | `/stats` (+ numéros HighLevel) | Décider des tests A/B |
 | 4. Diagnostic | Visite engagée, formulaire commencé, champ refusé, clics « Prendre rendez-vous » et téléphone, défilement, clics répétés | `/stats`, GA4, Clarity | Comprendre où ça bloque |
 | Garde-fous | Envois échoués = 0. Partage du trafic conforme. Taux de rendez-vous par variante pas pire. Spam stable. | `/stats`, HighLevel | Ne pas « gagner » un test en dégradant autre chose |
 
@@ -60,7 +60,7 @@ Note : Claude n'est pas avocat. Les points touchant la Loi 25 méritent une vali
 - **Visiteur** : visiteur unique par jour, compté sans témoin.
 - **Demande reçue** : HighLevel a répondu 2xx.
 - **Visite engagée** : moitié de la page atteinte, ou 30 s de lecture avec l'onglet visible.
-- **Contact** : demande reçue ou clic sur le numéro. Il devient « appel abouti » dès que CallRail est relié (D4).
+- **Contact** : demande reçue ou clic sur le numéro. Il devient « appel abouti » dès que les numéros d'attribution HighLevel par variante sont en place (D4).
 
 ---
 
@@ -120,11 +120,19 @@ Notes :
 - **Quand il passe à `true`**, dans l'ordre :
   - dans `<head>`, avant GTM : Google Consent Mode v2, tout refusé par défaut (`ad_storage`, `ad_user_data`, `ad_personalization`, `analytics_storage`) ;
   - le choix déjà mémorisé est appliqué tout de suite, et les clics publicitaires sont conservés sans témoin (`url_passthrough`) ;
-  - la bannière propose « Tout refuser » et « Tout accepter », de même taille, même couleur et même poids, plus « Personnaliser » ;
+  - la bannière dit en mots simples **pourquoi** (savoir quelles annonces mènent à un rendez-vous et ce qui aide ou bloque sur la page), **quoi** (pages vues, clics, appareil ; jamais le contenu du formulaire) et **avec qui** (Google, Meta, Microsoft). Le détail des outils est au 2e niveau (« Choisir ») ;
+  - « Refuser » et « Accepter » ont la même taille, la même couleur et demandent le même nombre de clics ;
   - deux catégories : **mesure d'audience** (GA4, Clarity) et **publicité** (Google Ads, Meta) ;
   - le choix est mémorisé 12 mois dans le témoin fonctionnel `dc_consent` et reste modifiable par le lien « Préférences de témoins » / « Témoins » ;
   - le consentement Clarity v2 suit le choix ; sans accord, Clarity fonctionne sans témoin.
-- **Ce qui ne demande pas de consentement :** le compteur interne (aucun témoin) et le cookie A/B (fonctionnel, nécessaire pour qu'un visiteur voie toujours la même page).
+**Pourquoi la bannière n'est ni vague ni « orientée vers Accepter ».** Les lignes directrices 2023-1 de la Commission d'accès à l'information sont explicites :
+- mettre en valeur l'acceptation plutôt que le refus (couleur, taille, nombre de clics) « peut rendre le consentement sans effet » (§ 2.2) ;
+- le premier niveau doit dire pourquoi, quels renseignements et quels tiers (§ 3.5) ;
+- les fins vagues comme « améliorer » ne suffisent pas (§ 4.3).
+
+Un consentement sans effet ne protège rien : les données recueillies le seraient sans consentement valide. La bannière est donc rédigée pour être **courte et rassurante tout en restant précise**. Le refus coûte peu pour la décision : `/stats`, HighLevel et les numéros d'appel restent complets, et Google modélise une partie des conversions non observées.
+
+- **Ce qui ne demande pas de consentement :** le compteur interne (aucun témoin), le cookie A/B (fonctionnel, nécessaire pour qu'un visiteur voie toujours la même page) et les numéros de téléphone fixes par variante.
 - **Politiques de confidentialité :**
   - VD : `/confidentialite` est mise à jour (Clarity, catégories, lien « Témoins ») ;
   - Confort : la politique du site principal doit mentionner Clarity et les choix de témoins (CMO/Malek).
@@ -211,10 +219,11 @@ Chaque test est consigné avant son lancement dans `docs/TESTS.md` :
    - optionnel, si la décision D5 le permet : conversions améliorées pour les leads (courriel/téléphone haché).
    - Quand « RDV pris » dépasse ~30 par mois et par compte, envisager d'en faire l'objectif d'enchères principal.
 3. **Meta :** Conversions API depuis HighLevel (Lead, Schedule), avec `event_id` pour dédupliquer avec le pixel.
-4. **CallRail :**
-   - un numéro distinct pour la variante B sur chaque site (D4) ;
-   - les appels de plus de 60 s sont importés comme conversion « Appel qualifié » ;
-   - Claude ajoute l'affichage d'un numéro par variante dès que les numéros existent (≈ 15 min de travail).
+4. **Appels : numéros d'attribution HighLevel** (CallRail n'est plus utilisé) :
+   - un numéro HighLevel distinct par variante sur chaque site (D4). L'appel arrive dans HighLevel sur le bon contact, et le numéro composé dit quelle version la personne a vue ;
+   - Claude affiche le bon numéro dans chaque variante dès que les numéros existent (≈ 15 min de travail). Le numéro est écrit dans la page : aucun script tiers ni témoin, donc rien à demander au visiteur ;
+   - les appels de plus de 60 s sont envoyés à Google Ads comme conversion « Appel qualifié » (par l'intégration HighLevel ou un import) ;
+   - si on veut un jour la source exacte de chaque appel (Google vs Meta), il faudra passer à un « number pool » HighLevel avec insertion dynamique. Ce script dépose un témoin : il passera alors dans la catégorie Publicité de la bannière.
 5. **Comparaison hebdomadaire.** Les trois chiffres doivent concorder à ±10 % près. Un écart plus grand signale un problème de marquage à corriger avant toute décision.
 
    | Demandes | Source |
@@ -242,7 +251,7 @@ Chaque test est consigné avant son lancement dans `docs/TESTS.md` :
 | **Fait** | Événements, Clarity, bannière et Consent Mode (désactivés par réglage), `event_id` vers HighLevel, décision bayésienne + contrôle SRM dans `/stats`, tests | — | — |
 | **Avant la bascule** (avant le renouvellement Unbounce du 15 oct.) | Mettre les identifiants Clarity et le réglage de consentement dans `page.json`, sur réception | 1) Créer deux projets Clarity (masquage Strict, IP de la clinique exclues, lien GA4) et transmettre les identifiants. 2) GA4 : dimensions `ab_test`, `ab_variant`, `interaction`, `field`. 3) HighLevel : champs et étapes (§ 7). 4) GTM VD : balises (§ 4). 5) Politique de confidentialité Confort | Décisions D1 à D6 ; validations clinique (prix régulier, date de fin, responsable vie privée) |
 | **Bascule + 7 jours** | Correctifs éventuels | Recette de la mesure (§ 10), comparaison des trois chiffres | Accord écrit de bascule DNS |
-| **+30 jours** | Numéro par variante (si D4) | Conversions hors ligne Ads et Meta, CallRail | Revue mensuelle |
+| **+30 jours** | Numéro par variante (si D4) | Conversions hors ligne Ads et Meta, numéros d'attribution HighLevel | Revue mensuelle |
 | **+8 semaines** | Variante suivante (file d'attente) | Décision du test 1 selon la règle | Valider le test suivant |
 
 ---

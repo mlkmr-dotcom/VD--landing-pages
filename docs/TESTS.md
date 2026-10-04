@@ -21,7 +21,7 @@ Chaque test est consigné **avant** son lancement. La règle de décision est da
   - A = nouvelle page (structure gagnante de Confort) ;
   - B = A + barre fixe + numéro sous le bouton du haut.
 - **Critère principal :** demandes reçues ÷ visiteurs.
-- **Critère secondaire :** contacts (demandes + clics téléphone, puis appels CallRail).
+- **Critère secondaire :** contacts (demandes + clics téléphone, puis appels reçus sur les numéros HighLevel par variante).
 - **Garde-fous :** voir plus haut.
 - **Même hypothèse que** `general-2026-10` (Confort) : lecture combinée à la fin.
 - **Dates :** début à la bascule DNS ; revue à 14 jours ; limite à 8 semaines.

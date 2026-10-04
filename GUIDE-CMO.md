@@ -125,7 +125,7 @@ Le plan complet est dans **`docs/PLAN-MESURE.md`** (décisions de Malek D1 à D6
 5. **Plus tard (+30 jours)** :
    - conversions hors ligne « RDV pris » et « Patient présent » vers Google Ads (gclid) ;
    - Meta Conversions API ;
-   - un numéro CallRail réservé à la variante B.
+   - un numéro d'attribution HighLevel distinct par variante (A et B).
 
 ## 6. Points à valider par la clinique avant la mise en ligne
 

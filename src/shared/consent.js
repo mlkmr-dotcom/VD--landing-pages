@@ -35,13 +35,13 @@
     'opacity:0;transform:translateY(8px);transition:opacity .2s ease-out,transform .2s ease-out}' +
     '.dcc.in{opacity:1;transform:none}' +
     '.dcc h2{font-size:16px;line-height:1.3;font-weight:600;margin:0 0 6px;font-family:inherit;color:inherit;letter-spacing:0;text-transform:none}' +
-    '.dcc p{margin:0 0 12px}.dcc a{color:inherit;text-decoration:underline}' +
+    '.dcc p{margin:0 0 12px}.dcc p.sub{margin:10px 0 0;font-size:13px;opacity:.85}.dcc p.sub .link{padding:0;min-height:0;font-size:13px}.dcc a{color:inherit;text-decoration:underline}' +
     '.dcc .row{display:flex;gap:8px;flex-wrap:wrap}' +
     '.dcc button{font-size:14px;line-height:1;font-weight:600;font-family:inherit;letter-spacing:0;text-transform:none;min-height:44px;padding:0 16px;border-radius:10px;cursor:pointer}' +
     '.dcc .main{flex:1 1 120px;background:' + accent + ';color:' + bg + ';border:1px solid ' + accent + '}' +
     '.dcc .link{background:none;border:0;color:inherit;text-decoration:underline;padding:0 4px;font-weight:500}' +
     '.dcc fieldset{border:0;margin:0 0 12px;padding:0}.dcc label{display:flex;gap:10px;align-items:flex-start;margin:0 0 8px;cursor:pointer}' +
-    '.dcc input{width:18px;height:18px;margin:2px 0 0;accent-color:' + accent + '}.dcc small{display:block;opacity:.75}' +
+    '.dcc input{flex:0 0 18px;width:18px;height:18px;margin:2px 0 0;padding:0;accent-color:' + accent + '}.dcc small{display:block;opacity:.75}' +
     '.dcc button:focus-visible,.dcc input:focus-visible{outline:2px solid ' + accent + ';outline-offset:2px}' +
     '.dcc-reopen{display:block;margin:12px auto 20px;background:none;border:0;font:13px/1.4 system-ui,Arial,sans-serif;color:inherit;opacity:.7;text-decoration:underline;cursor:pointer}' +
     '@media (prefers-reduced-motion:reduce){.dcc{transition:none}}';
@@ -64,21 +64,25 @@
   function open(detailed) {
     if (box) close();
     if (!d.getElementById('dcc-css')) d.head.appendChild(el('style', { id: 'dcc-css' }, css));
-    var privacy = cfg.privacyUrl ? ' <a href="' + cfg.privacyUrl + '" target="_blank" rel="noopener">Politique de confidentialité</a>' : '';
+    var privacy = cfg.privacyUrl ? '<a href="' + cfg.privacyUrl + '" target="_blank" rel="noopener">Confidentialité</a>' : '';
     box = el('section', { 'class': 'dcc', role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': 'dcc-t', 'data-clarity-mask': 'True' });
-    box.innerHTML = '<h2 id="dcc-t">Vos choix de confidentialité</h2>' +
-      '<p>Avec votre accord, nous utilisons des témoins pour mesurer la fréquentation de cette page et l’efficacité de nos publicités. ' +
-      'Ils restent désactivés tant que vous n’avez pas choisi.' + privacy + '</p>' +
-      (detailed ?
-        '<fieldset><legend class="dcc-sr" style="position:absolute;left:-9999px">Catégories</legend>' +
-        '<label><input type="checkbox" checked disabled><span>Nécessaires<small>Fonctionnement de la page et version affichée. Toujours actifs.</small></span></label>' +
-        '<label><input type="checkbox" id="dcc-a"' + (state.analytics ? ' checked' : '') + '><span>Mesure d’audience<small>Google Analytics, Microsoft Clarity (enregistrement anonymisé de la navigation, champs masqués).</small></span></label>' +
-        '<label><input type="checkbox" id="dcc-m"' + (state.marketing ? ' checked' : '') + '><span>Publicité<small>Google Ads, Meta : mesurer les résultats de nos annonces.</small></span></label>' +
-        '</fieldset><div class="row"><button type="button" class="main" data-c="save">Enregistrer mes choix</button></div>'
-        :
-        '<div class="row"><button type="button" class="main" data-c="none">Tout refuser</button>' +
-        '<button type="button" class="main" data-c="all">Tout accepter</button></div>' +
-        '<div class="row" style="margin-top:8px"><button type="button" class="link" data-c="more">Personnaliser</button></div>');
+    // Premier niveau (lignes directrices CAI 2023-1, § 3.5) : pourquoi, quels renseignements, quels tiers — en mots simples.
+    // Refuser et Accepter : même taille, même couleur, même nombre de clics (§ 2.2).
+    box.innerHTML = detailed ?
+      '<h2 id="dcc-t">Choisir mes témoins</h2>' +
+      '<fieldset><legend style="position:absolute;left:-9999px">Catégories de témoins</legend>' +
+      '<label><input type="checkbox" checked disabled><span>Nécessaires<small>Font fonctionner la page et gardent la même version d’une visite à l’autre. Toujours actifs.</small></span></label>' +
+      '<label><input type="checkbox" id="dcc-a"' + (state.analytics ? ' checked' : '') + '><span>Mesure d’audience<small>Google Analytics et Microsoft Clarity : pages vues, clics, défilement, type d’appareil, et relecture anonymisée de la navigation. Les champs du formulaire sont masqués.</small></span></label>' +
+      '<label><input type="checkbox" id="dcc-m"' + (state.marketing ? ' checked' : '') + '><span>Publicité<small>Google Ads et Meta : savoir quelle annonce a mené à votre visite ou à votre demande de rendez-vous.</small></span></label>' +
+      '</fieldset><div class="row"><button type="button" class="main" data-c="save">Enregistrer mes choix</button></div>' +
+      (privacy ? '<p class="sub">' + privacy + '</p>' : '')
+      :
+      '<h2 id="dcc-t">Des témoins (cookies), avec votre accord</h2>' +
+      '<p>Ils nous disent quelles annonces mènent à un rendez-vous et ce qui aide ou bloque sur cette page. ' +
+      'Outils de Google, Meta et Microsoft : pages vues, clics, appareil. Jamais le contenu du formulaire.</p>' +
+      '<div class="row"><button type="button" class="main" data-c="none">Refuser</button>' +
+      '<button type="button" class="main" data-c="all">Accepter</button></div>' +
+      '<p class="sub"><button type="button" class="link" data-c="more">Choisir</button>' + (privacy ? ' · ' + privacy : '') + '</p>';
     box.addEventListener('click', function (ev) {
       var b = ev.target.closest ? ev.target.closest('button[data-c]') : null;
       if (!b) return;
