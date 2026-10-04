@@ -47,6 +47,17 @@
   "tracking": {
     "gtm": "GTM-M29KWPM"
   },
+  "measure": {
+    "_doc": "Voir docs/PLAN-MESURE.md. clarity = identifiant du projet Microsoft Clarity (vide = désactivé). consentBanner = bannière Loi 25 + Google Consent Mode v2 (décision de Malek).",
+    "clarity": "",
+    "consentBanner": false,
+    "privacyUrl": "/confidentialite",
+    "ga4Direct": "",
+    "consentTheme": {
+      "ink": "#2F3342",
+      "accent": "#565B6E"
+    }
+  },
   "test": {
     "id": "vd-iberville-2026-10",
     "cookie": "vd_ab_iberville",

@@ -42,7 +42,7 @@ public/assets/       images optimisées (WebP + JPEG)
 migrations/          schéma D1 du compteur
 tools/build.mjs      construit dist/ (aucune dépendance)
 test/                tests unitaires (npm test)
-docs/                BASCULE.md (mise en ligne + retour arrière), MESURE.md
+docs/                BASCULE.md (mise en ligne + retour arrière), MESURE.md, PLAN-MESURE.md (plan de mesure et A/B), TESTS.md (journal des tests)
 ```
 
 ## Commandes

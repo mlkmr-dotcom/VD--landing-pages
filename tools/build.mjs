@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync } from 'node:fs'
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { measureHead } from './measure-head.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
@@ -22,7 +23,7 @@ function emit(dir, name, ext, content) {
   writeFileSync(join(DIST, 'assets', dir, file), content);
   return `/assets/${dir}/${file}`;
 }
-const shared = { runtime: emit('shared', 'lp', 'js', rd('src/shared/lp.js')) };
+const shared = { runtime: emit('shared', 'lp', 'js', rd('src/shared/lp.js')), consent: emit('shared', 'consent', 'js', rd('src/shared/consent.js')) };
 
 const FONTS = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prata&display=swap';
 
@@ -75,7 +76,9 @@ function buildPage(slug) {
 }
 
 function renderPage({ page, v, pageCss, extraCss, body, extraBody }) {
-  const lp = { pageId: page.pageId, pagePath: page.path, variant: v, test: page.test.id, clinic: page.slug };
+  const m = page.measure || {};
+  const measure = { clarity: m.clarity || '', consentBanner: !!m.consentBanner, privacyUrl: m.privacyUrl || '', ga4Direct: m.ga4Direct || '', consentTheme: m.consentTheme || {} };
+  const lp = { pageId: page.pageId, pagePath: page.path, variant: v, test: page.test.id, clinic: page.slug, measure };
   return `<!DOCTYPE html>
 <html lang="${page.language}">
 <head>
@@ -99,6 +102,7 @@ function renderPage({ page, v, pageCss, extraCss, body, extraBody }) {
 <link rel="preload" as="image" href="/assets/${page.slug}/hero-900.webp" imagesrcset="/assets/${page.slug}/hero-900.webp 900w, /assets/${page.slug}/hero-1600.webp 1600w" imagesizes="(max-width: 800px) 100vw, 50vw">
 <link rel="stylesheet" href="${pageCss}">
 ${extraCss}
+${measureHead({ measure, test: page.test.id, variant: v, pagePath: page.path })}
 <script>window.__dcLp=${JSON.stringify(lp)};window.dataLayer=window.dataLayer||[];window.dataLayer.push({ab_test:${JSON.stringify(page.test.id)},ab_variant:${JSON.stringify(v)},lp_page_id:${JSON.stringify(page.pageId)}});</script>
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${page.tracking.gtm}');</script>
 </head>
@@ -107,6 +111,7 @@ ${extraCss}
 ${body}
 ${extraBody}
 <script src="${shared.runtime}" defer></script>
+${measure.consentBanner ? `<script src="${shared.consent}" defer></script>` : ''}
 </body>
 </html>
 `;

@@ -106,7 +106,9 @@ const FIELD_LIMITS = {
   'message__comment_pouvonsnous_vous_aider_': 2000,
   utm_source: 250, utm_medium: 250, utm_campaign: 250, utm_content: 250, utm_term: 250,
   gclid: 250, gbraid: 250, wbraid: 250, fbclid: 250, msclkid: 250,
-  landing_path: 100, ab_variant: 10, ab_test: 60
+  landing_path: 100, ab_variant: 10, ab_test: 60,
+  // Identifiant de la demande (aussi ID de transaction de la conversion Ads) : relie navigateur, Ads, GA4 et HighLevel.
+  event_id: 80
 };
 
 const ATTR_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid'];
@@ -125,6 +127,7 @@ export function validateLead(input) {
     clean[k] = v.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '');
   }
   for (const k of ATTR_KEYS) if (!attrSafe(clean[k])) clean[k] = '';
+  if (!/^dcub-[A-Za-z0-9-]{8,70}$/.test(clean.event_id)) clean.event_id = '';
   const errors = [];
   if (clean['nom_et_prénom'].length < 2) errors.push('nom');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean['email_'])) errors.push('courriel');
@@ -170,7 +173,7 @@ export function buildWebhookJson(clean, meta) {
     utm_source: clean.utm_source, utm_medium: clean.utm_medium, utm_campaign: clean.utm_campaign,
     utm_content: clean.utm_content, utm_term: clean.utm_term,
     gclid: clean.gclid, gbraid: clean.gbraid, wbraid: clean.wbraid, fbclid: clean.fbclid, msclkid: clean.msclkid,
-    ab_test: clean.ab_test, ab_variant: clean.ab_variant,
+    ab_test: clean.ab_test, ab_variant: clean.ab_variant, event_id: clean.event_id,
     submitted_at: (meta.now || new Date()).toISOString()
   };
 }

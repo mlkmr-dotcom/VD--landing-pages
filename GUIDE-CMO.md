@@ -97,10 +97,35 @@ Après la bascule :
 - **GA4 :** via la balise de l'étape 3. Créer les dimensions personnalisées `ab_test` et `ab_variant`, de portée événement.
 
 **Règles :**
-- décider après 4 semaines ou ~30 demandes par variante, et p < 0,05 ; sinon garder A ;
+- **Décision :** suivre la règle affichée dans `/stats` (détail dans `docs/PLAN-MESURE.md` § 6).
+  - Minimum 14 jours et 100 visiteurs par variante, avec un partage du trafic conforme.
+  - B gagne si P(B > A) ≥ 95 % et la perte attendue est faible ; A gagne si P(B > A) ≤ 5 %.
+  - Après 8 semaines sans décision : garder A.
+  - Garde-fou : le taux de rendez-vous pris (HighLevel) par variante ne doit pas baisser.
 - ne pas changer la répartition en cours de test ;
 - pour arrêter : `weights: { a: 100 }` ;
 - pour un nouveau test : nouvelle variante et nouvel identifiant de test.
+
+
+## Mesure avancée : Clarity, consentement, boucle fermée
+
+Le plan complet est dans **`docs/PLAN-MESURE.md`** (décisions de Malek D1 à D6, dictionnaire des événements, recette). Ce qui vous revient :
+
+1. **Microsoft Clarity** : créer un projet pour ce site.
+   - Réglages : masquage **Strict**, adresses IP de la clinique exclues, intégration GA4.
+   - Transmettre l'identifiant du projet : il va dans `src/pages/*/page.json` → `measure.clarity`.
+2. **Consentement (Loi 25)** : après la décision de Malek, `measure.consentBanner: true`.
+   - Le code gère la bannière, Google Consent Mode v2 et le consentement Clarity.
+   - Vérifier la politique de confidentialité liée (`measure.privacyUrl`).
+3. **GA4** : dimensions personnalisées de portée événement `ab_test`, `ab_variant`, `interaction` et `field` ; export BigQuery quotidien ; conservation des données sur 14 mois.
+4. **HighLevel** :
+   - champs `lp_event_id`, `ab_test`, `ab_variant`, `utm_*`, `gclid`, `gbraid`, `wbraid`, `fbclid` ;
+   - étapes Nouveau → Contacté → RDV pris → Présent → Non qualifié/Perdu, tenues à jour par l'équipe ;
+   - l'`event_id` reçu dans le webhook est le même que l'ID de transaction de la conversion Ads.
+5. **Plus tard (+30 jours)** :
+   - conversions hors ligne « RDV pris » et « Patient présent » vers Google Ads (gclid) ;
+   - Meta Conversions API ;
+   - un numéro CallRail réservé à la variante B.
 
 ## 6. Points à valider par la clinique avant la mise en ligne
 

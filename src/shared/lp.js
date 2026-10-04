@@ -62,6 +62,55 @@
     } catch (_) { /* ne jamais bloquer la page */ }
   }
 
+  // ---------- Mesure : un seul point d'entrée pour chaque interaction ----------
+  // - compteur interne D1 (source de vérité du test A/B) ;
+  // - Microsoft Clarity (événement + session prioritaire pour les demandes et les appels) ;
+  // - dataLayer « lp_interaction » (GTM) et, si la page parle à GA4 directement, un événement GA4.
+  // Les tests internes et aperçus ne vont ni dans GA4 ni dans GTM (Clarity les marque « qa »).
+  var MEASURE = cfg.measure || {};
+  var D1_KINDS = { view: 1, cta: 1, tel: 1, form_start: 1, engaged: 1, form_invalid: 1 };
+  var GA4_NAMES = { cta: 'lp_cta_click', tel: 'lp_tel_click', form_start: 'lp_form_start', engaged: 'lp_engaged',
+    form_invalid: 'lp_form_invalid', lead_error: 'lp_lead_error' };
+  function track(kind, extra) {
+    if (D1_KINDS[kind]) beacon(kind);
+    try {
+      if (typeof w.clarity === 'function' && kind !== 'view') {
+        w.clarity('event', kind === 'lead' ? 'lead_accepted' : kind);
+        if (kind === 'lead' || kind === 'tel') w.clarity('upgrade', kind);
+      }
+    } catch (_) {}
+    if (QA || kind === 'view' || kind === 'lead') return;
+    var params = { interaction: kind, ab_test: TEST, ab_variant: VARIANT, page_path: PATH };
+    if (extra) for (var x in extra) params[x] = extra[x];
+    try { w.dataLayer = w.dataLayer || []; w.dataLayer.push(Object.assign({ event: 'lp_interaction' }, params)); } catch (_) {}
+    try {
+      if (MEASURE.ga4Direct && typeof w.gtag === 'function' && GA4_NAMES[kind]) {
+        var p = Object.assign({ send_to: MEASURE.ga4Direct }, params);
+        delete p.interaction;
+        w.gtag('event', GA4_NAMES[kind], p);
+      }
+    } catch (_) {}
+  }
+  w.dcLpTrack = track;
+
+  // Visite « engagée » : moitié de la page atteinte ou 30 s de lecture (onglet visible). Une fois par page vue.
+  function watchEngagement() {
+    var done = false, visibleMs = 0, last = Date.now();
+    function fire() { if (done) return; done = true; track('engaged'); cleanup(); }
+    function onScroll() {
+      var h = Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0) - w.innerHeight;
+      if (h > 0 && (w.scrollY || w.pageYOffset) / h >= 0.5) fire();
+    }
+    var timer = w.setInterval(function () {
+      var now = Date.now();
+      if (d.visibilityState === 'visible') visibleMs += now - last;
+      last = now;
+      if (visibleMs >= 30000) fire();
+    }, 1000);
+    function cleanup() { w.clearInterval(timer); w.removeEventListener('scroll', onScroll); }
+    w.addEventListener('scroll', onScroll, { passive: true });
+  }
+
   // ---------- Formulaire ----------
   function form() { return d.querySelector('#vd-page form#dc-form'); }
 
@@ -123,7 +172,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     if (sending) return;
-    if (typeof f.reportValidity === 'function' && !f.reportValidity()) return;
+    if (typeof f.reportValidity === 'function' && !f.reportValidity()) return; // compté par l'écouteur « invalid »
     fillHidden(f);
     var data = {};
     Array.prototype.forEach.call(f.elements, function (el) {
@@ -155,8 +204,10 @@
       }
       // Conversion seulement si le relais de production a accepté (ni robot, ni dry run, ni test interne).
       if (res.j.accepted === true && !res.j.dryRun && !res.j.qa && !QA) signalSuccess(eventId);
+      if (res.j.accepted === true) track('lead');
     }).catch(function () {
       showError(true);
+      track('lead_error');
     }).then(function () {
       sending = false;
       if (button) button.disabled = false;
@@ -170,10 +221,19 @@
     d.documentElement.lang = page.dataset.language || 'fr-CA';
     var f = form();
     if (f) {
+      f.setAttribute('data-clarity-mask', 'True');
+      // Validation native du navigateur : l'événement submit n'est pas émis si un champ est invalide.
+      var lastInvalid = 0;
+      f.addEventListener('invalid', function (ev) {
+        var now = Date.now();
+        if (now - lastInvalid < 1000) return;
+        lastInvalid = now;
+        track('form_invalid', { field: ev.target && ev.target.name ? String(ev.target.name).slice(0, 40) : '' });
+      }, true);
       fillHidden(f);
       var started = false;
       f.addEventListener('focusin', function () {
-        if (!started) { started = true; beacon('form_start'); }
+        if (!started) { started = true; track('form_start'); }
       });
     }
     w.addEventListener('submit', onSubmit, true);
@@ -181,9 +241,9 @@
       var t = event.target && event.target.closest ? event.target : null;
       if (!t) return;
       var tel = t.closest('a[href^="tel:"]');
-      if (tel) beacon('tel');
+      if (tel) track('tel');
       var cta = t.closest('[data-dc-action="appointment"]');
-      if (cta) { beacon('cta'); w.setTimeout(focusForm, 350); }
+      if (cta) { track('cta'); w.setTimeout(focusForm, 350); }
       if (t.closest('[data-dc-new-request]')) {
         var fm = form(), confirmation = d.getElementById('dc-success');
         if (!fm || !confirmation) return;
@@ -194,7 +254,8 @@
         focusForm();
       }
     });
-    beacon('view');
+    track('view');
+    watchEngagement();
   }
 
   if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', init, { once: true });

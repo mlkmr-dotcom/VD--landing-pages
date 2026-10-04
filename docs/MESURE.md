@@ -8,6 +8,8 @@
 | `form_start` | premier clic dans le formulaire | intention |
 | `cta` | clic « Prendre rendez-vous » | intention |
 | `tel` | clic sur un numéro | clic, **pas** un appel abouti |
+| `engaged` | moitié de la page atteinte ou 30 s de lecture (onglet visible) | visite engagée |
+| `form_invalid` | envoi refusé par le navigateur (champ invalide) | friction du formulaire |
 | `lead` | serveur, après réponse 2xx du webhook HighLevel | **demande reçue** — c'est la conversion |
 | `lead_error` | serveur, webhook en échec | à surveiller (doit rester à 0) |
 
@@ -19,7 +21,8 @@
 
 - Répartition aléatoire au premier passage, mémorisée 30 jours (cookie fonctionnel `vd_ab_iberville`, nécessaire pour qu'un visiteur voie toujours la même version).
 - La variante est envoyée à HighLevel (`ab_variant`) et dans `dataLayer` / GA4 (`ab_variant`).
-- Le tableau de bord indique l'écart B vs A et sa valeur p (test de deux proportions). Règle de décision : p < 0,05 **et** au moins ~30 demandes par variante.
+- Le tableau de bord donne une **décision bayésienne** : probabilité que B batte A, écart probable avec intervalle, perte attendue. Il contrôle aussi le partage du trafic (SRM). La valeur p classique reste affichée à titre indicatif.
+- Règle de décision, plan de marquage complet, Clarity et consentement : voir **`docs/PLAN-MESURE.md`**. Journal des tests : `docs/TESTS.md`.
 
 ## Suivi Google
 

@@ -48,4 +48,4 @@ export const REDIRECTS = {
 
 export const BOT_UA = /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|facebookexternalhit|adsbot|mediapartners|google-read-aloud|bingpreview|petalbot|yandex|baidu|semrush|ahrefs|curl|wget|python|axios|node-fetch|go-http|java\/|okhttp|httpclient|scrapy|phantom|puppeteer|playwright|selenium/i;
 
-export const EVENT_KINDS = ['view', 'cta', 'tel', 'form_start'];
+export const EVENT_KINDS = ['view', 'cta', 'tel', 'form_start', 'engaged', 'form_invalid'];
