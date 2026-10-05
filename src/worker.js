@@ -78,6 +78,12 @@ export function assignVariant(request, url, page) {
   return { variant: pickVariant(weights), setCookie: true, forced: false };
 }
 
+// L’aperçu est isolé des plateformes de mesure, indépendamment des balises GTM publiées.
+function isolatedPreview(request, env) {
+  const url = new URL(request.url);
+  return env.LEAD_DRY_RUN === '1' || url.searchParams.get('dc_qa') === '1' || url.searchParams.has('dc_variant') || /(?:^|[?&])(?:dc_qa=1|dc_variant=)/.test(request.headers.get('referer') || '');
+}
+
 async function servePage(request, env, url, path) {
   if (request.method !== 'GET' && request.method !== 'HEAD') return new Response(null, { status: 405 });
   const page = PAGES[path];
@@ -94,6 +100,9 @@ async function servePage(request, env, url, path) {
     'referrer-policy': 'strict-origin-when-cross-origin',
     'x-content-type-options': 'nosniff'
   });
+  if (isolatedPreview(request, env)) {
+    headers.set('content-security-policy', "script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-src 'none'; object-src 'none'");
+  }
   if (setCookie) {
     headers.append('set-cookie', `${page.test.cookie}=${variant}; Path=/; Max-Age=${ONE_MONTH}; Secure; SameSite=Lax`);
   }
@@ -257,7 +266,7 @@ async function handleEvent(request, env, ctx) {
   const ev = baseEvent(request, {
     page: input.p, test: page.test.id,
     variant: page.test.weights[input.v] !== undefined ? input.v : '',
-    us: input.us, um: input.um, uc: input.uc, c: input.c, r: input.r, qa: input.qa ? 1 : 0
+    us: input.us, um: input.um, uc: input.uc, c: input.c, r: input.r, qa: input.qa || isolatedPreview(request, env) ? 1 : 0
   });
   ctx.waitUntil(record(env, { ...ev, kind: input.k }));
   return new Response(null, { status: 204 });
@@ -328,6 +337,6 @@ function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 }
 function notFound() {
-  return new Response(`<!doctype html><html lang="fr-CA"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page introuvable | Votre Dentisterie</title><body style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:15vh auto;padding:0 16px;color:#2F3342"><h1 style="color:#565B6E">Page introuvable</h1><p>Cette page n'existe plus. Visitez <a href="https://www.votredentisterie.com/">votredentisterie.com</a> ou appelez-nous au <a href="tel:+14503460102">450 346-0102</a>.</p></body></html>`,
+  return new Response(`<!doctype html><html lang="fr-CA"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page introuvable | Votre Dentisterie</title><body style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:15vh auto;padding:0 16px;color:#2F3342"><h1 style="color:#565B6E">Page introuvable</h1><p>Cette page n'existe plus. Visitez <a href="https://www.votredentisterie.com/">votredentisterie.com</a> ou appelez-nous au <a href="tel:+14503903135">450 390-3135</a>.</p></body></html>`,
     { status: 404, headers: { 'content-type': 'text/html; charset=utf-8', 'x-robots-tag': 'noindex' } });
 }
