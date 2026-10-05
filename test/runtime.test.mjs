@@ -11,7 +11,7 @@ async function scenario(name, options={}){
     querySelector:()=>button,appendChild:el=>elements.push(el),addEventListener(){},setAttribute(){},reset(){}};
   const title={textContent:'Votre demande a été envoyée.'},note={textContent:'Confirmation normale'};
   const success={hidden:true,querySelector:s=>s==='h3'?title:s==='p'?note:null,focus(){},scrollIntoView(){}},error={hidden:true};
-  const page={dataset:{language:'fr-CA'}},doc={readyState:'complete',referrer:'',visibilityState:'visible',
+  const page={dataset:{language:'fr-CA'}},doc={readyState:'complete',referrer:options.referrer||'',visibilityState:'visible',
     documentElement:{scrollHeight:1000},body:{scrollHeight:1000},
     querySelector:s=>s==='#vd-page form#dc-form'?form:null,
     getElementById:id=>({'vd-page':page,'dc-success':success,'dc-form-error':error}[id]||null),
@@ -40,6 +40,7 @@ async function scenario(name, options={}){
   assert.equal(requests.length,options.valid===false?0:1,name+' number of POST requests');
   if(events.length){
     const payload=JSON.parse(requests[0].request.body),event=events[0];
+    if(options.referrer)assert.equal(payload.referrer_host,new URL(options.referrer).hostname);
     assert.equal(event.event_id,payload.event_id);assert.equal(event.clinic_id,'vd-iberville');
     assert.equal(event.lp_page_id,'vd-iberville-general');assert.equal(event.tracking_schema,'vd_lp_success_v1');
     assert.deepEqual(Object.keys(event).sort(),['event','event_id','clinic_id','service','language','page_path','lp_page_id','tracking_schema','ab_test','ab_variant'].sort());
@@ -57,3 +58,5 @@ const cases=[['accepted'],['invalid form',{valid:false,expectedEvents:0}],
  ['isolated dry run result',{response:{ok:true,accepted:false,dryRun:true,qa:true},expectedEvents:0,qaMessage:true}],
  ['network failure',{networkError:true,expectedEvents:0}],['double submit while pending',{doubleSubmit:true}]];
 for(const [name,options]of cases)test('browser runtime: '+name,()=>scenario(name,options));
+
+test('browser runtime: source organique dans le formulaire',()=>scenario('organic',{referrer:'https://www.google.com/search?q=example'}));
