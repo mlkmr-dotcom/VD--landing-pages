@@ -194,7 +194,7 @@
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) { return { ok: !!(r.ok && j && j.ok), j: j || {} }; });
     }).then(function (res) {
-      if (!res.ok) throw new Error('rejected');
+      if (!res.ok || (res.j.accepted !== true && !QA && !res.j.dryRun && !res.j.qa)) throw new Error('rejected');
       var confirmation = d.getElementById('dc-success');
       f.hidden = true;
       if (confirmation) {
@@ -269,3 +269,4 @@
   if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', init, { once: true });
   else init();
 }(window, document));
+
