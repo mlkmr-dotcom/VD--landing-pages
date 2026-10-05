@@ -94,15 +94,44 @@ test('accepted seulement pour le relais de production; jamais pour robot ou dry 
   const ok = await withFetch(async () => new Response('{}'), () => worker.fetch(lead(), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
   assert.deepEqual(await ok.json(), { ok: true, accepted: true, qa: false });
   const qa = await withFetch(async () => new Response('{}'), () => worker.fetch(lead({ qa: '1' }), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
-  assert.deepEqual(await qa.json(), { ok: true, accepted: true, qa: true });
+  assert.deepEqual(await qa.json(), { ok: true, accepted: false, dryRun: true, qa: true });
   let n = 0;
   const spam = await withFetch(async () => { n++; return new Response(''); }, () => worker.fetch(lead({ website: 'x' }), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
   assert.deepEqual(await spam.json(), { ok: true, accepted: false }); assert.equal(n, 0);
   const dry = await worker.fetch(lead(), { LEAD_DRY_RUN: '1' }, ctx);
-  assert.deepEqual(await dry.json(), { ok: true, accepted: false, dryRun: true });
+  assert.deepEqual(await dry.json(), { ok: true, accepted: false, dryRun: true, qa: true });
 });
 
 test('attribution : aucune coordonnée personnelle', () => {
   assert.equal(attrSafe('marie@example.com'), false); assert.equal(attrSafe('450-555-1234'), false);
   assert.equal(attrSafe('dentiste iberville'), true); assert.equal(attrSafe('120212345678901234'), true);
+});
+
+
+// Les appels ci-dessous sont tous simulés : aucun contact, webhook réel ou message patient.
+for (const c of [
+  { name: 'dry run avec un secret présent', env: { LEAD_DRY_RUN: '1' } },
+  { name: 'marqueur QA avec un secret présent', extra: { qa: '1' } },
+  { name: 'URL QA avec un secret présent', ref: 'https://preview.test/?dc_qa=1' },
+  { name: 'aperçu de variante avec un secret présent', ref: 'https://preview.test/?dc_variant=b' }
+]) {
+  test(c.name + ' ne transmet aucune demande', async () => {
+    let calls = 0;
+    const request = lead(c.extra);
+    if (c.ref) request.headers.set('referer', c.ref);
+    const response = await withFetch(async () => {
+      calls++;
+      return new Response('{}');
+    }, () => worker.fetch(request, { GHL_WEBHOOK_URL: 'https://hook.test/x', ...c.env }, ctx));
+    assert.equal(calls, 0);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { ok: true, accepted: false, dryRun: true, qa: true });
+  });
+}
+test('la validation reste prioritaire en mode dry run', async () => {
+  let calls = 0;
+  const response = await withFetch(async () => { calls++; return new Response('{}'); },
+    () => worker.fetch(lead({ email_: 'invalide' }), { GHL_WEBHOOK_URL: 'https://hook.test/x', LEAD_DRY_RUN: '1' }, ctx));
+  assert.equal(calls, 0);
+  assert.equal(response.status, 422);
 });

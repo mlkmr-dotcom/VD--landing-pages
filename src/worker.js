@@ -206,11 +206,14 @@ async function handleLead(request, env, ctx, url) {
   if (spam) { ctx.waitUntil(record(env, { ...ev, kind: 'lead_spam' })); return json({ ok: true, accepted: false }); }
   if (errors.length) return json({ ok: false, error: 'validation', fields: errors }, 422);
 
+  // Les essais internes restent isolés même quand le secret de production existe.
+  // Garder ce garde-fou avant tout accès au webhook : aucun contact ni message patient.
+  if (env.LEAD_DRY_RUN === '1' || ev.qa === 1) {
+    ctx.waitUntil(record(env, { ...ev, kind: 'lead_dry_run', qa: 1 }));
+    return json({ ok: true, accepted: false, dryRun: true, qa: true });
+  }
+
   if (!env.GHL_WEBHOOK_URL) {
-    if (env.LEAD_DRY_RUN === '1') {
-      ctx.waitUntil(record(env, { ...ev, kind: 'lead_dry_run', qa: 1 }));
-      return json({ ok: true, accepted: false, dryRun: true });
-    }
     ctx.waitUntil(record(env, { ...ev, kind: 'lead_error' }));
     return json({ ok: false, error: 'not_configured' }, 503);
   }
