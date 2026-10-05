@@ -81,7 +81,7 @@ export function assignVariant(request, url, page) {
 // L’aperçu est isolé des plateformes de mesure, indépendamment des balises GTM publiées.
 function isolatedPreview(request, env) {
   const url = new URL(request.url);
-  return env.LEAD_DRY_RUN === '1' || url.searchParams.get('dc_qa') === '1' || url.searchParams.has('dc_variant') || /(?:^|[?&])(?:dc_qa=1|dc_variant=)/.test(request.headers.get('referer') || '');
+  return url.hostname !== SITE.host || env.LEAD_DRY_RUN === '1' || url.searchParams.get('dc_qa') === '1' || url.searchParams.has('dc_variant') || /(?:^|[?&])(?:dc_qa=1|dc_variant=)/.test(request.headers.get('referer') || '');
 }
 
 async function servePage(request, env, url, path) {
@@ -115,7 +115,7 @@ const FIELD_LIMITS = {
   'message__comment_pouvonsnous_vous_aider_': 2000,
   utm_source: 250, utm_medium: 250, utm_campaign: 250, utm_content: 250, utm_term: 250,
   gclid: 250, gbraid: 250, wbraid: 250, fbclid: 250, msclkid: 250,
-  landing_path: 100, ab_variant: 10, ab_test: 60,
+  landing_path: 100, ab_variant: 10, ab_test: 60, referrer_host: 253,
   // Identifiant de la demande (aussi ID de transaction de la conversion Ads) : relie navigateur, Ads, GA4 et HighLevel.
   event_id: 80
 };
@@ -211,7 +211,8 @@ async function handleLead(request, env, ctx, url) {
     variant: page.test.weights[clean.ab_variant] !== undefined ? clean.ab_variant : '',
     us: clean.utm_source, um: clean.utm_medium, uc: clean.utm_campaign,
     c: ['gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid'].find((k) => clean[k]) || '',
-    qa: input.qa === '1' || /(?:^|[?&])(?:dc_qa=1|dc_variant=)/.test(request.headers.get('referer') || '') ? 1 : 0
+    r: clean.referrer_host,
+    qa: input.qa === '1' || isolatedPreview(request, env) ? 1 : 0
   });
 
   // Robot : réponse neutre, aucune conversion côté navigateur.
