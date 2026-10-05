@@ -198,13 +198,21 @@
       var confirmation = d.getElementById('dc-success');
       f.hidden = true;
       if (confirmation) {
+        if (QA || res.j.dryRun || res.j.qa) {
+          var qaTitle = confirmation.querySelector('h3');
+          var qaNote = confirmation.querySelector('p');
+          if (qaTitle) qaTitle.textContent = 'Essai effectué — aucune demande envoyée.';
+          if (qaNote) qaNote.textContent = 'Cet aperçu est en mode essai. Aucun rendez-vous ni message patient n’a été créé.';
+        }
         confirmation.hidden = false;
         confirmation.focus({ preventScroll: true });
         confirmation.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
       // Conversion seulement si le relais de production a accepté (ni robot, ni dry run, ni test interne).
-      if (res.j.accepted === true && !res.j.dryRun && !res.j.qa && !QA) signalSuccess(eventId);
-      if (res.j.accepted === true) track('lead');
+      if (res.j.accepted === true && !res.j.dryRun && !res.j.qa && !QA) {
+        signalSuccess(eventId);
+        track('lead');
+      }
     }).catch(function () {
       showError(true);
       track('lead_error');
