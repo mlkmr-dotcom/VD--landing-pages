@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { pickVariant, assignVariant, validateLead, buildWebhookJson, sourceOf, localDay } from '../src/worker.js';
 import { twoProportion } from '../src/stats.js';
@@ -156,4 +157,38 @@ test('la validation reste prioritaire en mode dry run', async () => {
     () => worker.fetch(lead({ email_: 'invalide' }), { GHL_WEBHOOK_URL: 'https://hook.test/x', LEAD_DRY_RUN: '1' }, ctx));
   assert.equal(calls, 0);
   assert.equal(response.status, 422);
+});
+
+// Le numéro de suivi doit être cohérent sur la page, le footer et le secours 404.
+test('numéro HighLevel Iberville sur la page et le secours 404', async () => {
+  const config = JSON.parse(readFileSync(new URL('../src/pages/iberville/page.json', import.meta.url), 'utf8'));
+  assert.deepEqual(config.phone, { display: '450 390-3135', href: 'tel:+14503903135' });
+  const response = await worker.fetch(new Request('https://vd.test/inconnue'), {}, ctx);
+  assert.equal(response.status, 404);
+  const html = await response.text();
+  assert.match(html, /tel:\+14503903135/);
+  assert.doesNotMatch(html, /tel:\+14503460102/);
+});
+
+test('aperçu isolé : scripts et connexions externes bloqués, production inchangée', async () => {
+  const env = { ASSETS: { fetch: async () => new Response('<html>aperçu</html>') } };
+  for (const suffix of ['?dc_qa=1', '?dc_variant=b']) {
+    const response = await worker.fetch(new Request('https://preview.test/' + suffix), env, ctx);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-security-policy'), "script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-src 'none'; object-src 'none'");
+  }
+  const dry = await worker.fetch(new Request('https://preview.test/'), {...env, LEAD_DRY_RUN:'1'}, ctx);
+  assert.ok(dry.headers.get('content-security-policy'));
+  const live = await worker.fetch(new Request('https://preview.test/'), env, ctx);
+  assert.equal(live.headers.get('content-security-policy'), null);
+});
+
+test('visite dry run exclue même sans marqueur navigateur', async () => {
+  const rows = [], pending = [];
+  const DB = { batch: async () => [], prepare(sql) { return { bind(...values) { return { run: async () => { rows.push(values); } }; } }; } };
+  const request = new Request('https://preview.test/api/e', { method:'POST', headers:{'content-type':'application/json','user-agent':'Recette navigateur'}, body:JSON.stringify({k:'view',p:'/',v:'a',qa:0}) });
+  await worker.fetch(request, {DB, LEAD_DRY_RUN:'1', VISITOR_SALT:'local-salt'}, { waitUntil(p) { pending.push(p); } });
+  await Promise.all(pending);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0][12], 1);
 });
