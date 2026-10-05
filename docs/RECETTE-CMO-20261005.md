@@ -27,3 +27,10 @@ Correctifs préparés sur branche de revue, sans bascule DNS ni publication GTM.
 - En aperçu (QA, variante forcée ou dry run), une politique CSP empêche scripts, connexions et frames externes; la production conserve ses balises.
 - Les événements internes sont marqués QA par le serveur en dry run, même si le navigateur omet son marqueur.
 - Tests locaux et build : 48/48 pour Iberville. Numéro HighLevel 450 390-3135 repris sur les deux variantes, la confidentialité et le secours 404; renvoi réel encore à tester.
+
+## Contre-vérification Claude — 5 octobre
+Revue indépendante des versions b1ad9cc (DC) et 5bfb317 (VD) : affichage A/B desktop/mobile, formulaires acceptés/rejetés, event_id, absence de données personnelles en mesure et isolation QA validés sur faux webhook. Aucun envoi patient.
+
+Retouches A1/A2 intégrées après cette revue : même hostname référent pour la visite et sa demande organique; toute URL dont le hostname diffère de SITE.host est isolée (CSP, aucun webhook et événements QA), sans dépendre d’un paramètre de test. Régression serveur sans marqueur, attribution organique et navigateur Iberville. Tests finaux : 51/51; build A/B réussi.
+
+La recette réelle Cloudflare/HighLevel/GTM, l’appel réel et l’approbation DNS restent nécessaires. Iberville conserve LEAD_DRY_RUN=1 dans cette branche.
