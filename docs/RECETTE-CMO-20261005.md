@@ -22,3 +22,8 @@ Correctifs préparés sur branche de revue, sans bascule DNS ni publication GTM.
 - Relecture Claude indépendante sur les deux branches et captures desktop/mobile.
 - Même URL, TLS, redirections validées et procédure de retour arrière documentée.
 - Aucun changement DNS, domaine, publication GTM ou fusion main sans décision explicite de Malek.
+
+## Derniers contrôles
+- En aperçu (QA, variante forcée ou dry run), une politique CSP empêche scripts, connexions et frames externes; la production conserve ses balises.
+- Les événements internes sont marqués QA par le serveur en dry run, même si le navigateur omet son marqueur.
+- Tests locaux et build : 48/48 pour Iberville. Numéro HighLevel 450 390-3135 repris sur les deux variantes, la confidentialité et le secours 404; renvoi réel encore à tester.
