@@ -42,6 +42,8 @@
     try { var h = d.referrer ? new URL(d.referrer).hostname : ''; return h === w.location.hostname ? '' : h; } catch (_) { return ''; }
   }
 
+  var ENTRY_REF = refHost(); // même référent pour la visite et sa demande
+
   // ---------- Compteur interne ----------
   function beacon(kind) {
     try {
@@ -50,7 +52,7 @@
         us: attribution.utm_source || '', um: attribution.utm_medium || '',
         uc: attribution.utm_campaign || '',
         c: CLICK_KEYS.filter(function (k) { return !!attribution[k]; })[0] || '',
-        r: refHost(),
+        r: ENTRY_REF,
         qa: QA ? 1 : 0
       });
       if (w.navigator.sendBeacon) {
@@ -130,6 +132,7 @@
     setHidden(f, 'landing_path', PATH);
     setHidden(f, 'ab_variant', VARIANT);
     setHidden(f, 'ab_test', TEST);
+    setHidden(f, 'referrer_host', ENTRY_REF);
   }
 
   function newId() {
