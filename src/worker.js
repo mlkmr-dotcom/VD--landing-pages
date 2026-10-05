@@ -133,6 +133,9 @@ export function validateLead(input) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean['email_'])) errors.push('courriel');
   const digits = clean['numéro_de_téléphone'].replace(/\D/g, '');
   if (digits.length < 10 || digits.length > 15) errors.push('téléphone');
+  // Le raccord CRM rejette une demande sans cet identifiant. Ne pas annoncer
+  // un succès lorsque le workflow ne peut pas traiter la soumission.
+  if (!clean.event_id) errors.push('event_id');
   return { clean, errors, spam: typeof input.website === 'string' && input.website.trim() !== '' };
 }
 
