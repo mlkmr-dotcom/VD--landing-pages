@@ -27,10 +27,10 @@ test('le cookie garde la même variante; ?dc_variant force sans cookie', () => {
 });
 
 test('validation du formulaire', () => {
-  const ok = validateLead({ 'nom_et_prénom': 'Marie Tremblay', email_: 'marie@example.com', 'numéro_de_téléphone': '(450) 555-1234' });
+  const ok = validateLead({ 'nom_et_prénom': 'Marie Tremblay', email_: 'marie@example.com', 'numéro_de_téléphone': '(450) 555-1234', event_id: 'dcub-test0001' });
   assert.deepEqual(ok.errors, []);
   assert.equal(ok.spam, false);
-  const bad = validateLead({ 'nom_et_prénom': 'M', email_: 'pas-un-courriel', 'numéro_de_téléphone': '123' });
+  const bad = validateLead({ 'nom_et_prénom': 'M', email_: 'pas-un-courriel', 'numéro_de_téléphone': '123', event_id: 'dcub-test0001' });
   assert.deepEqual(bad.errors, ['nom', 'courriel', 'téléphone']);
   assert.equal(validateLead({ website: 'http://spam' }).spam, true);
   assert.equal(validateLead({ 'nom_et_prénom': 'x'.repeat(500) }).clean['nom_et_prénom'].length, 120);
@@ -80,9 +80,31 @@ import worker, { attrSafe } from '../src/worker.js';
 const ctx = { waitUntil() {} };
 const lead = (extra = {}) => new Request('https://chez.votredentisterie.com/api/lead', {
   method: 'POST', headers: { 'content-type': 'application/json' },
-  body: JSON.stringify({ 'nom_et_prénom': 'Test QA', email_: 'qa@example.com', 'numéro_de_téléphone': '4505550100', landing_path: '/', ab_variant: 'a', ...extra })
+  body: JSON.stringify({ 'nom_et_prénom': 'Test QA', email_: 'qa@example.com', 'numéro_de_téléphone': '4505550100', landing_path: '/', ab_variant: 'a', event_id: 'dcub-test0001', ...extra })
 });
 async function withFetch(impl, fn) { const real = globalThis.fetch; globalThis.fetch = impl; try { return await fn(); } finally { globalThis.fetch = real; } }
+
+for (const event_id of [undefined, '', 'schema_reference_only', 'dcub-short', 'wrongprefix-test0001']) {
+  test(`identifiant rejeté avant le relais CRM : ${String(event_id)}`, async () => {
+    let calls = 0;
+    const response = await withFetch(async () => { calls++; return new Response('{}'); },
+      () => worker.fetch(lead({ event_id }), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
+    assert.equal(response.status, 422);
+    assert.deepEqual(await response.json(), { ok: false, error: 'validation', fields: ['event_id'] });
+    assert.equal(calls, 0);
+  });
+}
+
+test('identifiant accepté conservé dans le relais CRM', async () => {
+  let sent;
+  const response = await withFetch(async (_url, options) => {
+    sent = JSON.parse(options.body);
+    return new Response('{}');
+  }, () => worker.fetch(lead({ event_id: 'dcub-12345678-1234-4321-abcd-123456789012' }), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
+  assert.equal(response.status, 200);
+  assert.equal(sent.event_id, 'dcub-12345678-1234-4321-abcd-123456789012');
+  assert.equal((await response.json()).accepted, true);
+});
 
 test('un seul envoi au webhook, même en cas d’échec', async () => {
   let n = 0;
