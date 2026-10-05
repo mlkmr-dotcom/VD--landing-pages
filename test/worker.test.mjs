@@ -179,7 +179,7 @@ test('aperçu isolé : scripts et connexions externes bloqués, production incha
   }
   const dry = await worker.fetch(new Request('https://preview.test/'), {...env, LEAD_DRY_RUN:'1'}, ctx);
   assert.ok(dry.headers.get('content-security-policy'));
-  const live = await worker.fetch(new Request('https://preview.test/'), env, ctx);
+  const live = await worker.fetch(new Request('https://chez.votredentisterie.com/'), env, ctx);
   assert.equal(live.headers.get('content-security-policy'), null);
 });
 
