@@ -97,7 +97,7 @@ export async function renderStats(request, env, url) {
 
   const verdict = (x) => !x ? 'Pas encore assez de données.'
     : `${x.lift === null ? '' : (x.lift >= 0 ? '+' : '') + (100 * x.lift).toFixed(0) + ' % pour B vs A · '}p = ${x.pValue.toFixed(3)} — ` +
-      (x.pValue < 0.05 ? 'écart significatif.' : 'pas encore significatif (attendre).');
+      (x.pValue < 0.05 ? 'écart significatif.' : 'pas encore significatif (attendre)');
 
   const rowsVariant = byVariant.map((r) => `<tr><td><b>${esc(r.variant.toUpperCase() || '?')}</b></td><td>${r.visitors}</td><td>${r.views}</td><td>${pct(r.engaged, r.views)}</td><td>${r.form_start}</td><td>${r.form_invalid}</td><td><b>${r.leads}</b></td><td>${r.converted_visitors}</td><td><b>${pct(r.converted_visitors, r.visitors)}</b></td><td>${r.tel}</td><td>${r.lead_errors}</td></tr>`).join('');
   const rowsDay = byDay.map((r) => `<tr><td>${esc(r.day)}</td><td>${esc(r.variant.toUpperCase())}</td><td>${r.visitors}</td><td>${r.views}</td><td>${r.leads}</td><td>${pct(r.converted_visitors, r.visitors)}</td><td>${r.tel}</td></tr>`).join('');
