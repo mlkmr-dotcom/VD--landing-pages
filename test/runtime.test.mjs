@@ -24,22 +24,25 @@ async function scenario(name, options={}){
     setInterval:()=>1,clearInterval(){},setTimeout:()=>1,innerHeight:600,
     fetch:async(path,request)=>{requests.push({path,request});
       if(options.networkError)throw new Error('offline simulated failure');
-      return {ok:options.httpOk!==false,json:async()=>options.response??{ok:true,accepted:true}};}};
+      const simulated=options.responses?.[requests.length-1];
+      return {ok:simulated?simulated.httpOk!==false:options.httpOk!==false,json:async()=>simulated?.response??options.response??{ok:true,accepted:true}};}};
   vm.runInNewContext(code,{window:win,document:doc,URL,URLSearchParams,Blob,Date,JSON,Math},{timeout:1000});
   const submit=()=>listeners.submit({target:form,preventDefault(){},stopImmediatePropagation(){}});
   submit();if(options.doubleSubmit)submit();
   for(let i=0;i<8;i++)await Promise.resolve();
   if(options.retry){if(options.changeBeforeRetry)elements.push({name:'extra',type:'text',value:'changed fictive payload'});submit();for(let i=0;i<8;i++)await Promise.resolve();}
+  if(options.thirdChangedRetry){elements.push({name:'changed',type:'text',value:'different fictive payload'});submit();for(let i=0;i<8;i++)await Promise.resolve();}
   const events=dataLayer.filter(x=>x.event==='vd_lp_form_success');
   assert.equal(events.length,options.expectedEvents??1,name);
   const leadMeasures=clarityCalls.filter(c=>c[0]==='event'&&c[1]==='lead_accepted');
   const upgrades=clarityCalls.filter(c=>c[0]==='upgrade'&&c[1]==='lead');
   assert.equal(leadMeasures.length,options.expectedEvents??1,name+' Clarity lead');
   assert.equal(upgrades.length,options.expectedEvents??1,name+' Clarity upgrade');
+  if(options.restored){assert.match(error.firstChild.nodeValue,/pas pu confirmer/);assert.doesNotMatch(error.firstChild.nodeValue,/déjà été tentée|réessayer/);}
   if(options.duplicate)assert.match(error.firstChild.nodeValue,/vérifier sa réception/);
   if(options.qaMessage)assert.match(title.textContent,/aucune demande envoyée/);
   if(options.expectedEvents===undefined)assert.equal(title.textContent,'Votre demande a été envoyée.');
-  assert.equal(requests.length,options.valid===false?0:options.retry?2:1,name+' number of POST requests');
+  assert.equal(requests.length,options.valid===false?0:options.thirdChangedRetry?3:options.retry?2:1,name+' number of POST requests');
   if(options.retry){const [a,b]=requests.map(r=>JSON.parse(r.request.body).event_id);if(options.changeBeforeRetry)assert.notEqual(a,b);else assert.equal(a,b);}
   if(events.length){
     const payload=JSON.parse(requests[0].request.body),event=events[0];
@@ -68,3 +71,6 @@ test('browser runtime: reprise identique après réseau perdu',()=>scenario('ret
 test('browser runtime: nouvelle référence si contenu modifié',()=>scenario('changed retry',{retry:true,changeBeforeRetry:true,networkError:true,expectedEvents:0}));
 
 test('référence déjà tentée : message prudent et aucune conversion',()=>scenario('duplicate',{duplicate:true,httpOk:false,response:{ok:false,error:'duplicate_request'},expectedEvents:0}));
+
+test('message de panne cohérent sans proposer un renvoi bloqué',()=>scenario('failure message',{networkError:true,restored:true,expectedEvents:0}));
+test('message 409 remplacé après contenu modifié puis nouvel échec',()=>scenario('restored message',{retry:true,thirdChangedRetry:true,restored:true,expectedEvents:0,responses:[{httpOk:false,response:{ok:false,error:'upstream'}},{httpOk:false,response:{ok:false,error:'duplicate_request'}},{httpOk:false,response:{ok:false,error:'upstream'}}]}));
