@@ -37,7 +37,10 @@ export async function renderStats(request, env, url) {
   if (!env.DB) return new Response('Base de statistiques non configurée', { status: 503 });
   await ensureSchema(env.DB);
 
-  const path = PAGES[url.searchParams.get('page')] ? url.searchParams.get('page') : Object.keys(PAGES)[0];
+  // Page explicite (?page=/urgences/) ; sans paramètre : première page. Page inconnue : 404, pas de repli.
+  const requested = url.searchParams.get('page');
+  if (requested !== null && !PAGES[requested]) return new Response('Page inconnue', { status: 404 });
+  const path = requested !== null ? requested : Object.keys(PAGES)[0];
   const page = PAGES[path];
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto' }).format(new Date());
   const from = /^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('from') || '') ? url.searchParams.get('from') : (env.TEST_START || '2026-10-01');
@@ -114,8 +117,9 @@ th:first-child,td:first-child{text-align:left}th{font-weight:600;color:#5a6b85;f
 form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 0}input{font:inherit;padding:4px 6px}
 .scroll{overflow-x:auto}</style></head><body>
 <h1>Landing page ${esc(path)} — test ${esc(page.test.id)}</h1>
+<p class="m">Pages : ${Object.keys(PAGES).map((p) => p === path ? `<b>${esc(p)}</b>` : `<a href="?key=${encodeURIComponent(key)}&amp;page=${encodeURIComponent(p)}">${esc(p)}</a>`).join(' · ')}</p>
 <p class="m">Du ${esc(from)} au ${esc(to)} (heure de Montréal). Robots, aperçus et tests internes exclus. Répartition actuelle : ${esc(JSON.stringify(page.test.weights))}.</p>
-<form method="get"><input type="hidden" name="key" value="${esc(key)}"><label>Du <input type="date" name="from" value="${esc(from)}"></label><label>au <input type="date" name="to" value="${esc(to)}"></label><button>Actualiser</button></form>
+<form method="get"><input type="hidden" name="key" value="${esc(key)}"><input type="hidden" name="page" value="${esc(path)}"><label>Du <input type="date" name="from" value="${esc(from)}"></label><label>au <input type="date" name="to" value="${esc(to)}"></label><button>Actualiser</button></form>
 <div class="v"><b>Indicateur principal — visiteurs-jours avec formulaire accepté ÷ visiteurs-jours exposés :</b> ${esc(decision(bz, a ? a.converted_visitors : 0, a ? a.visitors : 0))}<br><br><small>${esc(srmLine)} Comparaison indicative — formulaires : ${esc(verdict(t))}. Un visiteur revenant un autre jour peut être compté à nouveau; ces résultats ne suffisent pas à déclarer une variante gagnante.</small></div>
 <h2>Par variante</h2><div class="scroll"><table><tr><th>Variante</th><th>Visiteurs-jours</th><th>Visites</th><th>Visites engagées</th><th>Formulaire commencé</th><th>Formulaire refusé (champ invalide)</th><th>Formulaires acceptés</th><th>Visiteurs-jours avec formulaire</th><th>Taux de formulaire</th><th>Clics téléphone</th><th>Envois échoués</th></tr>${rowsVariant || '<tr><td colspan="11">Aucune donnée</td></tr>'}</table></div>
 <h2>Par appareil</h2><div class="scroll"><table><tr><th>Appareil</th><th>Variante</th><th>Visiteurs-jours</th><th>Formulaires acceptés</th><th>Taux</th><th>Clics téléphone</th></tr>${rowsDevice}</table></div>

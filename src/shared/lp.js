@@ -8,7 +8,7 @@
   'use strict';
   var cfg = w.__dcLp || {};
   var PAGE_ID = cfg.pageId || '';
-  var PATH = cfg.pagePath || '/';
+  var PATH = cfg.pagePath || '';
   var VARIANT = cfg.variant || 'a';
   var TEST = cfg.test || '';
   var CLICK_KEYS = ['gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid'];
@@ -145,8 +145,8 @@
     var payload = {
       event: 'vd_lp_form_success',
       event_id: eventId,
-      clinic_id: 'vd-iberville',
-      service: 'general',
+      clinic_id: cfg.clinicId || '',
+      service: cfg.service || '',
       language: 'fr',
       page_path: PATH,
       lp_page_id: PAGE_ID,

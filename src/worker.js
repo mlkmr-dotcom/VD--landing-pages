@@ -181,7 +181,7 @@ export function buildWebhookJson(clean, meta) {
   const parts = full.split(/\s+/);
   return {
     source: 'landing-page', site: meta.host, page_path: meta.pagePath, page_url: meta.pageUrl,
-    clinic: meta.clinic, page_id: meta.pageId,
+    clinic: meta.clinic, service: meta.service, landing_tag: meta.landingTag, page_id: meta.pageId,
     full_name: full, first_name: parts[0] || '', last_name: parts.slice(1).join(' '),
     email: clean.email_, phone: clean['numéro_de_téléphone'],
     message: clean['message__comment_pouvonsnous_vous_aider_'],
@@ -206,12 +206,16 @@ async function handleLead(request, env, ctx, url) {
   else if (ct.includes('form')) input = Object.fromEntries(await request.formData());
   if (!input || typeof input !== 'object') return json({ ok: false, error: 'body' }, 400);
 
-  const pagePath = PAGES[input.landing_path] ? input.landing_path : Object.keys(PAGES)[0];
+  // Page et variante doivent être connues : aucun repli silencieux sur une autre page.
+  const pagePath = typeof input.landing_path === 'string' && PAGES[input.landing_path] ? input.landing_path : '';
+  if (!pagePath) return json({ ok: false, error: 'validation', fields: ['landing_path'] }, 422);
   const page = PAGES[pagePath];
   const { clean, errors, spam } = validateLead(input);
+  if (!Object.prototype.hasOwnProperty.call(page.test.weights, clean.ab_variant)) errors.push('ab_variant');
+  clean.ab_test = page.test.id;
   const ev = baseEvent(request, {
     page: pagePath, test: page.test.id,
-    variant: page.test.weights[clean.ab_variant] !== undefined ? clean.ab_variant : '',
+    variant: Object.prototype.hasOwnProperty.call(page.test.weights, clean.ab_variant) ? clean.ab_variant : '',
     us: clean.utm_source, um: clean.utm_medium, uc: clean.utm_campaign,
     c: ['gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid'].find((k) => clean[k]) || '',
     r: clean.referrer_host,
@@ -243,7 +247,7 @@ async function handleLead(request, env, ctx, url) {
   }
 
   const meta = {
-    ip: request.headers.get('cf-connecting-ip') || '', host: SITE.host, pagePath, clinic: page.clinic,
+    ip: request.headers.get('cf-connecting-ip') || '', host: SITE.host, pagePath, clinic: page.clinic, service: page.service, landingTag: page.landingTag,
     pageId: page.pageId, pageName: page.pageName,
     pageUrl: `https://${SITE.host}${pagePath}`, webhookVariant: page.webhookVariant
   };
@@ -278,10 +282,11 @@ async function handleEvent(request, env, ctx) {
   const input = await request.json().catch(() => null);
   if (!input || !EVENT_KINDS.includes(input.k)) return new Response(null, { status: 204 });
   const page = PAGES[input.p];
-  if (!page) return new Response(null, { status: 204 });
+  // Page ou variante inconnue : ignoré (jamais rattaché à une autre page ou à une variante vide).
+  if (!page || !Object.prototype.hasOwnProperty.call(page.test.weights, input.v)) return new Response(null, { status: 204 });
   const ev = baseEvent(request, {
     page: input.p, test: page.test.id,
-    variant: page.test.weights[input.v] !== undefined ? input.v : '',
+    variant: input.v,
     us: input.us, um: input.um, uc: input.uc, c: input.c, r: input.r, qa: input.qa || isolatedPreview(request, env) ? 1 : 0
   });
   ctx.waitUntil(record(env, { ...ev, kind: input.k }));

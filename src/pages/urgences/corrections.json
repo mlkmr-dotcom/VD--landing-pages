@@ -1,0 +1,29 @@
+{
+  "_doc": "Corrections appliquées à la copie publiée (references/urgence-published-sanitized-20261005.html) par tools/import-urgences.mjs pour la variante A. Chaque chaîne doit apparaître exactement « count » fois (après les corrections précédentes). Aucune modification de mise en page. Référence d'harmonisation : générale Iberville validée (src/pages/iberville).",
+  "_categories": {
+    "technique": "numéro HighLevel, champs du formulaire, attributs de mesure",
+    "harmonisation": "coquilles et textes alignés sur la générale validée",
+    "prudence": "promesses cliniques ou superlatifs retirés (corrections nécessaires, communes à A et B)",
+    "clinique": "contenus d'une autre clinique (Oralvie) ou d'une autre succursale (Saint-Jean) retirés"
+  },
+  "removeHidden": {
+    "ids": ["lp-pom-text-58", "lp-pom-text-59", "lp-pom-text-60", "lp-pom-button-62", "lp-pom-text-183", "lp-pom-text-185", "lp-pom-button-186", "lp-pom-button-442", "lp-pom-text-444", "lp-pom-text-463", "lp-pom-text-502", "lp-pom-text-503", "lp-pom-text-506", "lp-pom-text-508", "lp-pom-text-568", "lp-pom-text-569"],
+    "category": "clinique",
+    "reason": "Éléments masqués sur ordinateur et mobile mais présents dans le code publié : promotions en anglais avec prix (blanchiment 199 $, nettoyage enfant), ancien numéro, adresse et horaires de la clinique St-Jean (Dominique Laroche), dentiste de Saint-Jean. Retirés du code pour qu'aucun tarif ni contenu Saint-Jean ne subsiste dans la page Iberville."
+  },
+  "replacements": [
+    { "find": "href=\"clkn/tel/450-346-0102\"", "replace": "href=\"tel:+14503903135\" data-dc-action=\"phone\"", "count": 3, "category": "technique", "reason": "Lien d'appel (suivi de clic Unbounce, ancien numéro 450 346-0102) remplacé par le numéro HighLevel Iberville 450 390-3135." },
+    { "find": "450-346-0102", "replace": "450 390-3135", "count": 3, "category": "technique", "reason": "Libellés d'appel : numéro HighLevel, même format que la générale." },
+    { "find": "href=\"#lp-pom-box-488\"", "replace": "href=\"#lp-pom-box-488\" data-dc-action=\"appointment\"", "count": 2, "category": "technique", "reason": "Boutons de rendez-vous : mesure CTA identique à la générale." },
+    { "find": "href=\"#lp-pom-box-339\"", "replace": "href=\"#lp-pom-box-488\" data-dc-action=\"appointment\"", "count": 1, "category": "technique", "reason": "Bouton mobile « Obtenir de l'aide » : pointait vers un bloc promotionnel masqué ; dirigé vers le formulaire." },
+    { "find": "name=\"full_name\"", "replace": "name=\"nom_et_prénom\"", "count": 1, "category": "technique", "reason": "Champ du relais /api/lead (même contrat que la générale)." },
+    { "find": "name=\"email\"", "replace": "name=\"email_\"", "count": 1, "category": "technique", "reason": "Champ du relais /api/lead." },
+    { "find": "name=\"phone_number\"", "replace": "name=\"numéro_de_téléphone\"", "count": 1, "category": "technique", "reason": "Champ du relais /api/lead." },
+    { "find": "name=\"message\"", "replace": "name=\"message__comment_pouvonsnous_vous_aider_\"", "count": 1, "category": "technique", "reason": "Champ du relais /api/lead." },
+    { "find": "Mecredi", "replace": "Mercredi", "count": 1, "category": "harmonisation", "reason": "Coquille des horaires (les horaires concordent avec la générale)." },
+    { "find": "Broyage des aliments", "replace": "Foulage alimentaire", "count": 1, "category": "harmonisation", "reason": "Terme dentaire usuel (« foulage alimentaire »)." },
+    { "find": "Nous ferons de notre mieux pour vous consulter rapidement afin d'évaluer votre urgence dentaire et fournir un traitement rapide.", "replace": "Nous ferons de notre mieux pour vous recevoir rapidement afin d'évaluer votre urgence dentaire et vous proposer un traitement adapté.", "count": 1, "category": "prudence", "reason": "« traitement rapide » : promesse clinique retirée (même formulation que Confort)." },
+    { "find": "La douceur et la délicatesse de sa pratique convaincront les plus craintifs et son équipe dynamique et soucieuse de votre santé dentaire s’occupera de vous faire sentir à l’aise.", "replace": "Diplômé de l’Université de Montréal (2008), formé en implantologie, occlusion et parodontie. Reconnu pour sa douceur avec les patients anxieux.", "count": 1, "category": "harmonisation", "reason": "Présentation du Dr Duy K. Nguyen alignée sur la générale validée." },
+    { "find": "Le Dr Malek s’est engagé à fournir le meilleur niveau de soins dentaires en employant les technologies les plus récentes et les plus appropriées aux besoins de ses patients.", "replace": "Le Dr Malek Amer s’engage à offrir des soins attentionnés, avec des technologies adaptées aux besoins de chaque patient.", "count": 1, "category": "prudence", "reason": "Superlatifs (« le meilleur niveau », « les plus récentes ») retirés. Présence du Dr Malek Amer sur la page Iberville à confirmer (absent de la générale validée)." }
+  ]
+}

@@ -16,7 +16,7 @@ async function scenario(name, options={}){
     querySelector:s=>s==='#vd-page form#dc-form'?form:null,
     getElementById:id=>({'vd-page':page,'dc-success':success,'dc-form-error':error}[id]||null),
     createElement:()=>({}),addEventListener(){}};
-  const win={__dcLp:{pageId:'vd-iberville-general',pagePath:'/',variant:'a',test:'vd-iberville-2026-10',measure:{}},
+  const win={__dcLp:{pageId:'vd-iberville-general',pagePath:'/',variant:'a',test:'vd-iberville-2026-10',clinic:'iberville',clinicId:'vd-iberville',service:'general',measure:{}},
     location:{search:options.search||'',hostname:'chez.votredentisterie.com'},dataLayer,clarity:(...args)=>clarityCalls.push(args),
     sessionStorage:{setItem:(k,v)=>storage.set(k,v),getItem:k=>storage.get(k)||null},
     crypto:{randomUUID:()=> 'offline-example-id-'+(++generatedIds)},navigator:{sendBeacon:(path,body)=>{beacons.push(path);return true;}},

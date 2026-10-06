@@ -15,10 +15,29 @@ export const PAGES = {
     // Nouveau workflow HighLevel (location VD Iberville) : charge utile JSON simple.
     webhookFormat: 'json',
     webhookVariant: 'a',
+    service: 'general',
     test: {
       id: 'vd-iberville-2026-10',
       cookie: 'vd_ab_iberville',
       // Poids en pourcentage. Pour arrêter le test : { a: 100 } ou { b: 100 }.
+      weights: { a: 50, b: 50 }
+    }
+  },
+  '/urgences/': {
+    slug: 'urgences',
+    // Page Unbounce « [Votre Dentisterie] - Dental Emergency (FR) » (chez.votredentisterie.com/urgences).
+    pageId: '0a0fcd7b-94f9-49aa-8db4-5025b3047ca4',
+    pageName: 'VD Iberville — Urgences dentaires',
+    // Même clinique que la générale : l'urgence est un service, jamais une clinique distincte.
+    clinic: 'iberville',
+    webhookFormat: 'json',
+    webhookVariant: 'a',
+    service: 'urgence',
+    // Tag propre à l'urgence (définition créée dans HighLevel) ; le tag commun landing-votre-dentisterie reste géré par le workflow.
+    landingTag: 'landing-urgence-votre-dentisterie',
+    test: {
+      id: 'vd-urgences-2026-10',
+      cookie: 'vd_ab_urgences',
       weights: { a: 50, b: 50 }
     }
   }
@@ -31,7 +50,10 @@ export const STATIC_PAGES = {
 };
 
 export const ALIASES = {
-  '/index.html': '/'
+  '/index.html': '/',
+  // Adresse utilisée par Google Ads (sans barre oblique) : servie comme la page, sans redirection.
+  '/urgences': '/urgences/',
+  '/urgences/index.html': '/urgences/'
 };
 
 // Anciennes pages Unbounce de chez.votredentisterie.com (≈ 0 visite en septembre 2026).
@@ -39,7 +61,6 @@ export const ALIASES = {
 export const REDIRECTS = {
   '/fb': { to: '/', status: 301 },
   '/st-jean': { to: 'https://www.votredentisterie.com/cliniques', status: 302 },
-  '/urgences': { to: 'https://www.votredentisterie.com/soins-dentaires/urgence', status: 302 },
   '/implants': { to: 'https://www.votredentisterie.com/soins-dentaires/implant', status: 302 },
   '/implants/fb': { to: 'https://www.votredentisterie.com/soins-dentaires/implant', status: 302 },
   '/invisalign-fr': { to: 'https://www.votredentisterie.com/soins-dentaires/invisalign', status: 302 },
