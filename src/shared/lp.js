@@ -156,9 +156,16 @@
     try { w.dataLayer = w.dataLayer || []; w.dataLayer.push(payload); } catch (_) {}
   }
 
+  var duplicateNotice = false;
   function showError(show) {
     var e = d.getElementById('dc-form-error');
-    if (e) e.hidden = !show;
+    if (e) {
+      if (show && e.firstChild && e.firstChild.nodeType === 3)
+        e.firstChild.nodeValue = duplicateNotice
+          ? 'Une demande avec cette référence a déjà été tentée. Pour vérifier sa réception, appelez-nous au '
+          : 'Nous n’avons pas pu confirmer la réception de votre demande. Veuillez nous appeler au ';
+      e.hidden = !show;
+    }
   }
 
   function focusForm() {
@@ -191,6 +198,7 @@
     var button = f.querySelector('button[type=submit]');
     sending = true;
     if (button) button.disabled = true;
+    duplicateNotice = false;
     showError(false);
     w.fetch('/api/lead', {
       method: 'POST',
@@ -200,11 +208,7 @@
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) { return { ok: !!(r.ok && j && j.ok), j: j || {} }; });
     }).then(function (res) {
-      if (res.j.error === 'duplicate_request') {
-        var errorNode = d.getElementById('dc-form-error');
-        if (errorNode && errorNode.firstChild && errorNode.firstChild.nodeType === 3)
-          errorNode.firstChild.nodeValue = 'Une demande avec cette référence a déjà été tentée. Pour vérifier sa réception, appelez-nous au ';
-      }
+      duplicateNotice = res.j.error === 'duplicate_request';
       if (!res.ok || (res.j.accepted !== true && !QA && !res.j.dryRun && !res.j.qa)) throw new Error('rejected');
       var confirmation = d.getElementById('dc-success');
       f.hidden = true;
