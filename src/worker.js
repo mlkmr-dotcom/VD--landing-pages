@@ -82,7 +82,9 @@ export function assignVariant(request, url, page) {
 // L’aperçu est isolé des plateformes de mesure, indépendamment des balises GTM publiées.
 function isolatedPreview(request, env) {
   const url = new URL(request.url);
-  return url.hostname !== SITE.host || env.LEAD_DRY_RUN === '1' || url.searchParams.get('dc_qa') === '1' || url.searchParams.has('dc_variant') || /(?:^|[?&])(?:dc_qa=1|dc_variant=)/.test(request.headers.get('referer') || '');
+  let refIsPreview = false;
+  try { const ref = new URL(request.headers.get('referer')); refIsPreview = ref.searchParams.get('dc_qa') === '1' || ref.searchParams.has('dc_variant'); } catch (_) {}
+  return url.hostname !== SITE.host || env.LEAD_DRY_RUN === '1' || url.searchParams.get('dc_qa') === '1' || url.searchParams.has('dc_variant') || refIsPreview;
 }
 
 async function servePage(request, env, url, path) {
