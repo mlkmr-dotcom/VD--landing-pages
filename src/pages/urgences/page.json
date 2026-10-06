@@ -1,0 +1,97 @@
+{
+  "path": "/urgences/",
+  "slug": "urgences",
+  "pageId": "0a0fcd7b-94f9-49aa-8db4-5025b3047ca4",
+  "pageName": "VD Iberville — Urgences dentaires",
+  "clinic": "iberville",
+  "clinicId": "vd-iberville",
+  "service": "urgence",
+  "language": "fr-CA",
+  "title": "Urgence dentaire à Iberville (Saint-Jean-sur-Richelieu) | Votre Dentisterie",
+  "description": "Dent brisée, douleur ou enflure? Votre Dentisterie Iberville offre des soins d’urgence dentaire pour vous et votre famille. Nouveaux patients acceptés.",
+  "robots": "noindex, nofollow",
+  "canonicalUrl": "https://chez.votredentisterie.com/urgences/",
+  "og": {
+    "type": "website",
+    "title": "Urgence dentaire | Votre Dentisterie Iberville",
+    "description": "Dent brisée, douleur ou enflure? Appelez Votre Dentisterie Iberville.",
+    "image": "https://chez.votredentisterie.com/assets/iberville/hero-1600.jpg",
+    "url": "https://chez.votredentisterie.com/urgences/"
+  },
+  "phone": {
+    "display": "450 390-3135",
+    "href": "tel:+14503903135"
+  },
+  "address": {
+    "line1": "707, boulevard d’Iberville",
+    "line2": "Saint-Jean-sur-Richelieu (Québec) J2X 3Z8",
+    "maps": "https://maps.google.com/?cid=11774873881471435114"
+  },
+  "google": {
+    "rating": "4,8",
+    "count": "76",
+    "checked": "2026-10-02",
+    "url": "https://maps.google.com/?cid=11774873881471435114"
+  },
+  "hours": [
+    [
+      "Lundi et jeudi",
+      "9 h à 20 h"
+    ],
+    [
+      "Mardi, mercredi et vendredi",
+      "9 h à 17 h"
+    ],
+    [
+      "Samedi et dimanche",
+      "Fermé"
+    ]
+  ],
+  "tracking": {
+    "gtm": "GTM-M29KWPM"
+  },
+  "measure": {
+    "_doc": "Voir docs/PLAN-MESURE.md. clarity = identifiant du projet Microsoft Clarity (vide = désactivé). consentBanner = bannière Loi 25 + Google Consent Mode v2 (décision de Malek).",
+    "clarity": "",
+    "consentBanner": false,
+    "privacyUrl": "/confidentialite",
+    "ga4Direct": "",
+    "consentTheme": {
+      "ink": "#2F3342",
+      "accent": "#565B6E"
+    }
+  },
+  "assetDir": "iberville",
+  "test": {
+    "id": "vd-urgences-2026-10",
+    "cookie": "vd_ab_urgences",
+    "variants": {
+      "a": 50,
+      "b": 50
+    },
+    "notes": "A = copie de l'urgence Unbounce publiée (variante a), corrections documentées dans corrections.json. B = gabarit de la nouvelle générale Iberville adapté à l'urgence (appel en haut de page, situations d'urgence, sans tarif) + barre d'action fixe."
+  },
+  "variantSpecs": {
+    "a": {
+      "kind": "unbounce",
+      "body": "a-body.html",
+      "styles": "a-styles.css",
+      "extraCss": "a-extra.css",
+      "desktopWidth": 1024,
+      "mobileWidth": 320,
+      "fonts": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@400;600&family=Prata&display=swap"
+    },
+    "b": {
+      "kind": "template",
+      "body": "b-body.html",
+      "templateFrom": "iberville",
+      "actionbar": true,
+      "heroPhone": false
+    }
+  },
+  "toValidate": [
+    "Dr Malek Amer présenté sur la variante A (page publiée) mais absent de la générale validée : confirmer sa présence à Iberville.",
+    "Variante A : photos Oralvie et logo Saint-Jean remplacés par des images Iberville (voir asset-sources.json) ; valider le choix des photos.",
+    "Polices ABC Social et Reckless Neue (variante A) chargées depuis l'hôte d'origine ubwebistry.s3 comme sur la page publiée : licence et dépendance à confirmer, sinon remplacer par Inter/Prata."
+  ]
+}

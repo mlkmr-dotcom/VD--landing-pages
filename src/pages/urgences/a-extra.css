@@ -1,0 +1,14 @@
+/* Variante A (copie Unbounce) : centrage du contenu et messages du formulaire. Mise en page publiée inchangée. */
+#vd-page [hidden]{display:none!important}
+#vd-page #lp-pom-root .lp-positioned-content{width:1024px;margin-left:-512px}
+@media (max-width:600px){#vd-page #lp-pom-root .lp-positioned-content{width:320px;margin-left:-160px}}
+#vd-page #dc-success{position:absolute;top:0;left:0;right:0;box-sizing:border-box;padding:24px;background:#fff;border-radius:12px;color:#2f3342;font:400 16px/24px Inter,Arial,sans-serif;z-index:6}
+#vd-page #dc-success h3{font:400 26px/32px Prata,Georgia,serif;margin:0 0 12px;color:#2f3342}
+#vd-page #dc-success p{margin:0}
+#vd-page #dc-success .dc-success-new{display:block;margin:18px 0 0;border:1.5px solid #565b6e;border-radius:28px;background:#fff;color:#565b6e;padding:11px 20px;font:600 15px/22px Inter,Arial,sans-serif;cursor:pointer}
+#vd-page .dc-form-error{position:absolute;left:0;right:0;margin:0;padding:8px 12px;box-sizing:border-box;border-radius:8px;background:#fff4f2;border:1px solid #f0b8ad;color:#8a1c0f;font:500 14px/20px Inter,Arial,sans-serif;z-index:6}
+#vd-page .dc-form-error a{color:#8a1c0f;text-decoration:underline}
+/* Champs : dimensionnement « border-box » de la feuille principale Unbounce (absente) ; supprime le débordement horizontal mobile. */
+#vd-page .lp-pom-form .ub-input-item{box-sizing:border-box;max-width:100%}
+/* Message d'erreur sous le bouton d'envoi (bouton à 398 px du haut du bloc formulaire, 49 px de haut). */
+#vd-page #lp-pom-form-490 .dc-form-error{top:459px}

@@ -1,0 +1,54 @@
+/* Feuille de base des pages Unbounce historiques (copie de DC--landing-pages src/shared/base.css), remplace main.css publié par Unbounce. */
+/* Base rules required by the historical page layout (lp-pom markup).
+   Reset + positioning primitives that the page stylesheet expects.
+   Kept minimal: only what the /general page uses. */
+html{color:#000;background:transparent;--scale:1}
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,button,textarea,p,blockquote,th,td{margin:0;padding:0}
+button::-moz-focus-inner{padding:0;border:none}
+table{border-collapse:collapse;border-spacing:0}
+fieldset,img{border:0}
+address,caption,cite,code,dfn,em,strong,th,var,optgroup{font-style:inherit;font-weight:inherit}
+li{list-style:none}
+h1,h2,h3,h4,h5,h6{font-size:100%;font-weight:normal}
+input,button,textarea,select,optgroup,option{font-family:inherit;font-size:inherit;font-style:inherit;font-weight:inherit}
+:focus{outline:0}
+:focus-visible{outline:2px solid #426cc2;outline-offset:2px}
+html,body,.lp-pom-body{height:100%;-webkit-text-size-adjust:none;text-size-adjust:none}
+body.lp-pom-body{background-color:#fff;font-family:Arial,sans-serif}
+body.lp-pom-body.lp-autoscale-enabled{overflow-x:clip}
+div.lp-pom-root{min-height:100%;position:relative;top:0;font-size:14px;line-height:17px}
+.lp-positioned-content{position:absolute;left:50%;top:0;height:0;z-index:1}
+.lp-pom-block-content{position:relative;height:100%}
+.lp-pom-root .lp-pom-button{text-decoration:none;display:block;cursor:pointer}
+.lp-pom-root .lp-pom-button:disabled{opacity:.6;pointer-events:none}
+div.lp-pom-root .lp-pom-button span{position:absolute;top:50%;display:block;text-align:center;left:0;right:0;padding:0 calc(8px*var(--scale,1));cursor:pointer}
+div.lp-pom-root .lp-pom-button{background:transparent}
+.lp-pom-button .label strong{font-weight:bolder}
+.lp-pom-button .label em{font-style:italic}
+.lp-pom-text span[style~="color:"] a{color:inherit}
+div.lp-pom-root .lp-pom-text span{line-height:0}
+div.lp-pom-root .lp-pom-text.inline span{line-height:1}
+div.lp-pom-root .lp-pom-text p{line-height:17px}
+div.lp-pom-root .lp-pom-text.nlh p{line-height:22px}
+div.lp-pom-root .lp-pom-text a{text-decoration:underline}
+div.lp-pom-root .lp-pom-text h1{font-size:28px;margin-bottom:19px;line-height:34px}
+div.lp-pom-root .lp-pom-text h2{font-size:21px;margin-bottom:16px;line-height:25px}
+div.lp-pom-root .lp-pom-text h3{font-size:16px;margin-bottom:15px;line-height:19px}
+div.lp-pom-root .lp-pom-text h4{font-size:14px;margin-bottom:14px;line-height:17px}
+div.lp-pom-root .lp-pom-text h5{font-size:12px;margin-bottom:13px;line-height:14px}
+div.lp-pom-root .lp-pom-text h6{font-size:10px;margin-bottom:12px;line-height:12px}
+div.lp-pom-root .lp-pom-text p,div.lp-pom-root .lp-pom-text blockquote,div.lp-pom-root .lp-pom-text ul,div.lp-pom-root .lp-pom-text dl{margin-bottom:16px}
+div.lp-pom-root .lp-pom-text>p:last-child,div.lp-pom-root .lp-pom-text>blockquote:last-child,div.lp-pom-root .lp-pom-text>dl:last-child,div.lp-pom-root .lp-pom-text>h1:last-child,div.lp-pom-root .lp-pom-text>h2:last-child,div.lp-pom-root .lp-pom-text>h3:last-child,div.lp-pom-root .lp-pom-text>h4:last-child,div.lp-pom-root .lp-pom-text>h5:last-child,div.lp-pom-root .lp-pom-text>h6:last-child{margin-bottom:0}
+div.lp-pom-root .lp-pom-text h1,div.lp-pom-root .lp-pom-text h2,div.lp-pom-root .lp-pom-text h3,div.lp-pom-root .lp-pom-text h4,div.lp-pom-root .lp-pom-text h5,div.lp-pom-root .lp-pom-text h6,div.lp-pom-root .lp-pom-text b,div.lp-pom-root .lp-pom-text strong{font-weight:bolder}
+div.lp-pom-root .lp-pom-text em{font-style:italic}
+div.lp-pom-root .lp-pom-text blockquote,div.lp-pom-root .lp-pom-text ul,div.lp-pom-root .lp-pom-text ol,div.lp-pom-root .lp-pom-text dl{margin:14px;font-size:14px;line-height:17px}
+div.lp-pom-root .lp-pom-text ul{margin-left:16px}
+div.lp-pom-root .lp-pom-text ol{margin-left:25px}
+div.lp-pom-root .lp-pom-text li{display:list-item}
+div.lp-pom-root .lp-pom-text ol li{list-style:decimal outside}
+div.lp-pom-root .lp-pom-text ul li{list-style:disc outside}
+div.lp-pom-root .lp-pom-text sup{vertical-align:super}
+div.lp-pom-root .lp-pom-text sub{vertical-align:sub}
+div.lp-pom-root .lp-element.lp-code{overflow:hidden}
+.lp-pom-root .lp-pom-image img{vertical-align:top}
+.lp-pom-root .lp-pom-image a img{cursor:pointer}
