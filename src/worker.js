@@ -2,6 +2,7 @@
 // Rôles : 1) A/B testing par cookie ; 2) relais du formulaire vers le webhook HighLevel ;
 // 3) compteur interne (visites, visiteurs, demandes, clics) ; 4) redirections ; 5) tableau de bord /stats.
 import { ensureSchema } from './schema.js';
+import { claimReceipt, finishReceipt } from './receipt.js';
 import { PAGES, ALIASES, REDIRECTS, BOT_UA, EVENT_KINDS, SITE, STATIC_PAGES } from './config.js';
 import { renderStats } from './stats.js';
 
@@ -231,6 +232,14 @@ async function handleLead(request, env, ctx, url) {
     return json({ ok: false, error: 'not_configured' }, 503);
   }
 
+  // Référence réservée une seule fois, avant le relais, même après un échec ambigu.
+  const guard = env.DEDUPE_REQUIRED === '1';
+  if (guard) {
+    try {
+      if (!await claimReceipt(env.DB,clean.event_id)) return json({ok:false,error:'duplicate_request'},409);
+    } catch (_) { return json({ok:false,error:'receipt_unavailable'},503); }
+  }
+
   const meta = {
     ip: request.headers.get('cf-connecting-ip') || '', host: SITE.host, pagePath, clinic: page.clinic,
     pageId: page.pageId, pageName: page.pageName,
@@ -248,6 +257,10 @@ async function handleLead(request, env, ctx, url) {
     });
     status = r.status; ok = r.ok;
   } catch (e) { status = 0; }
+  if (guard) {
+    try { await finishReceipt(env.DB,clean.event_id,ok?'accepted':status===0?'uncertain':'rejected'); }
+    catch (_) { /* pending reste réservé; aucun renvoi automatique. */ }
+  }
   ctx.waitUntil(record(env, { ...ev, kind: ok ? 'lead' : 'lead_error' }));
   if (!ok) {
     console.error('ghl_webhook_failed', status);
