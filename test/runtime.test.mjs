@@ -6,11 +6,11 @@ import assert from 'node:assert/strict';
 const code=readFileSync(new URL('../src/shared/lp.js',import.meta.url),'utf8');
 async function scenario(name, options={}){
   const listeners={},requests=[],beacons=[],dataLayer=[],clarityCalls=[],storage=new Map();
-  const elements=[]; elements.namedItem=name=>elements.find(el=>el.name===name)||null;
+  let generatedIds=0; const elements=[]; elements.namedItem=name=>elements.find(el=>el.name===name)||null;
   const button={disabled:false},form={elements,hidden:false,reportValidity:()=>options.valid!==false,
     querySelector:()=>button,appendChild:el=>elements.push(el),addEventListener(){},setAttribute(){},reset(){}};
   const title={textContent:'Votre demande a été envoyée.'},note={textContent:'Confirmation normale'};
-  const success={hidden:true,querySelector:s=>s==='h3'?title:s==='p'?note:null,focus(){},scrollIntoView(){}},error={hidden:true};
+  const success={hidden:true,querySelector:s=>s==='h3'?title:s==='p'?note:null,focus(){},scrollIntoView(){}},error={hidden:true,firstChild:{nodeType:3,nodeValue:'Default error'}};
   const page={dataset:{language:'fr-CA'}},doc={readyState:'complete',referrer:options.referrer||'',visibilityState:'visible',
     documentElement:{scrollHeight:1000},body:{scrollHeight:1000},
     querySelector:s=>s==='#vd-page form#dc-form'?form:null,
@@ -19,7 +19,7 @@ async function scenario(name, options={}){
   const win={__dcLp:{pageId:'vd-iberville-general',pagePath:'/',variant:'a',test:'vd-iberville-2026-10',measure:{}},
     location:{search:options.search||'',hostname:'chez.votredentisterie.com'},dataLayer,clarity:(...args)=>clarityCalls.push(args),
     sessionStorage:{setItem:(k,v)=>storage.set(k,v),getItem:k=>storage.get(k)||null},
-    crypto:{randomUUID:()=> 'offline-example-id'},navigator:{sendBeacon:(path,body)=>{beacons.push(path);return true;}},
+    crypto:{randomUUID:()=> 'offline-example-id-'+(++generatedIds)},navigator:{sendBeacon:(path,body)=>{beacons.push(path);return true;}},
     addEventListener:(event,handler)=>{listeners[event]=handler;},removeEventListener(){},
     setInterval:()=>1,clearInterval(){},setTimeout:()=>1,innerHeight:600,
     fetch:async(path,request)=>{requests.push({path,request});
@@ -29,15 +29,18 @@ async function scenario(name, options={}){
   const submit=()=>listeners.submit({target:form,preventDefault(){},stopImmediatePropagation(){}});
   submit();if(options.doubleSubmit)submit();
   for(let i=0;i<8;i++)await Promise.resolve();
+  if(options.retry){if(options.changeBeforeRetry)elements.push({name:'extra',type:'text',value:'changed fictive payload'});submit();for(let i=0;i<8;i++)await Promise.resolve();}
   const events=dataLayer.filter(x=>x.event==='vd_lp_form_success');
   assert.equal(events.length,options.expectedEvents??1,name);
   const leadMeasures=clarityCalls.filter(c=>c[0]==='event'&&c[1]==='lead_accepted');
   const upgrades=clarityCalls.filter(c=>c[0]==='upgrade'&&c[1]==='lead');
   assert.equal(leadMeasures.length,options.expectedEvents??1,name+' Clarity lead');
   assert.equal(upgrades.length,options.expectedEvents??1,name+' Clarity upgrade');
+  if(options.duplicate)assert.match(error.firstChild.nodeValue,/vérifier sa réception/);
   if(options.qaMessage)assert.match(title.textContent,/aucune demande envoyée/);
   if(options.expectedEvents===undefined)assert.equal(title.textContent,'Votre demande a été envoyée.');
-  assert.equal(requests.length,options.valid===false?0:1,name+' number of POST requests');
+  assert.equal(requests.length,options.valid===false?0:options.retry?2:1,name+' number of POST requests');
+  if(options.retry){const [a,b]=requests.map(r=>JSON.parse(r.request.body).event_id);if(options.changeBeforeRetry)assert.notEqual(a,b);else assert.equal(a,b);}
   if(events.length){
     const payload=JSON.parse(requests[0].request.body),event=events[0];
     if(options.referrer)assert.equal(payload.referrer_host,new URL(options.referrer).hostname);
@@ -60,3 +63,8 @@ const cases=[['accepted'],['invalid form',{valid:false,expectedEvents:0}],
 for(const [name,options]of cases)test('browser runtime: '+name,()=>scenario(name,options));
 
 test('browser runtime: source organique dans le formulaire',()=>scenario('organic',{referrer:'https://www.google.com/search?q=example'}));
+
+test('browser runtime: reprise identique après réseau perdu',()=>scenario('retry',{retry:true,networkError:true,expectedEvents:0}));
+test('browser runtime: nouvelle référence si contenu modifié',()=>scenario('changed retry',{retry:true,changeBeforeRetry:true,networkError:true,expectedEvents:0}));
+
+test('référence déjà tentée : message prudent et aucune conversion',()=>scenario('duplicate',{duplicate:true,httpOk:false,response:{ok:false,error:'duplicate_request'},expectedEvents:0}));
