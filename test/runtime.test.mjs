@@ -74,3 +74,5 @@ test('référence déjà tentée : message prudent et aucune conversion',()=>sce
 
 test('message de panne cohérent sans proposer un renvoi bloqué',()=>scenario('failure message',{networkError:true,restored:true,expectedEvents:0}));
 test('message 409 remplacé après contenu modifié puis nouvel échec',()=>scenario('restored message',{retry:true,thirdChangedRetry:true,restored:true,expectedEvents:0,responses:[{httpOk:false,response:{ok:false,error:'upstream'}},{httpOk:false,response:{ok:false,error:'duplicate_request'}},{httpOk:false,response:{ok:false,error:'upstream'}}]}));
+
+for(const search of ['?dc_variant','?dc_variant=','?%64c_variant=b','?dc_qa=%31']) test('aperçu sans valeur ou encodé : aucune conversion '+search,()=>scenario('preview marker',{search,expectedEvents:0,qaMessage:true,response:{ok:true,accepted:false,dryRun:true,qa:true}}));
