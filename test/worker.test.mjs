@@ -136,7 +136,8 @@ for (const c of [
   { name: 'dry run avec un secret présent', env: { LEAD_DRY_RUN: '1' } },
   { name: 'marqueur QA avec un secret présent', extra: { qa: '1' } },
   { name: 'URL QA avec un secret présent', ref: 'https://preview.test/?dc_qa=1' },
-  { name: 'aperçu de variante avec un secret présent', ref: 'https://preview.test/?dc_variant=b' }
+  { name: 'aperçu de variante avec un secret présent', ref: 'https://preview.test/?dc_variant=b' },
+  ...['?dc_variant','?dc_variant=','?%64c_variant=b','?dc_qa=%31'].map(q=>({name:'aperçu sans valeur ou encodé '+q,ref:'https://chez.votredentisterie.com/'+q}))
 ]) {
   test(c.name + ' ne transmet aucune demande', async () => {
     let calls = 0;
