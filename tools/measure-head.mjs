@@ -30,7 +30,7 @@ w.clarity('set','ab_test',c.test);w.clarity('set','ab_variant',c.variant);w.clar
 var q=new URLSearchParams(w.location.search),ok=function(v){return v&&v.length<=100&&!/[<>{}@]|\\d{3}[\\s.-]?\\d{3}[\\s.-]?\\d{4}/.test(v)};
 ['utm_source','utm_medium','utm_campaign'].forEach(function(n){var v=q.get(n);if(ok(v))w.clarity('set',n,v);});
 var ck=['gclid','gbraid','wbraid','fbclid','msclkid'].filter(function(n){return q.get(n);})[0];if(ck)w.clarity('set','click_id_type',ck);
-if(/(?:^|[?&])(?:dc_qa=1|dc_variant=)/.test(w.location.search))w.clarity('set','qa','1');` : '';
+if(q.get('dc_qa')==='1'||q.has('dc_variant'))w.clarity('set','qa','1');` : '';
   return `<script>
 (function(w,d,c){
 var dl=w.dataLayer=w.dataLayer||[];function g(){dl.push(arguments);}
