@@ -15,7 +15,8 @@
   var UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
   var STORE = 'dc_lp_attr_v1';
   // Aperçus (?dc_variant=…) et tests internes (?dc_qa=1) : exclus des statistiques.
-  var QA = /(?:^|[?&])(?:dc_qa=1|dc_variant=)/.test(w.location.search);
+  var previewParams = new URLSearchParams(w.location.search);
+  var QA = previewParams.get('dc_qa') === '1' || previewParams.has('dc_variant');
 
   // Attribution : valeurs bornées, jamais de courriel ni de numéro de téléphone.
   function safe(value) {
