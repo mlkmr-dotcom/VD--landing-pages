@@ -15,7 +15,8 @@
   var UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
   var STORE = 'dc_lp_attr_v1';
   // Aperçus (?dc_variant=…) et tests internes (?dc_qa=1) : exclus des statistiques.
-  var QA = /(?:^|[?&])(?:dc_qa=1|dc_variant=)/.test(w.location.search);
+  var previewParams = new URLSearchParams(w.location.search);
+  var QA = previewParams.get('dc_qa') === '1' || previewParams.has('dc_variant');
 
   // Attribution : valeurs bornées, jamais de courriel ni de numéro de téléphone.
   function safe(value) {
@@ -42,6 +43,8 @@
     try { var h = d.referrer ? new URL(d.referrer).hostname : ''; return h === w.location.hostname ? '' : h; } catch (_) { return ''; }
   }
 
+  var ENTRY_REF = refHost(); // même référent pour la visite et sa demande
+
   // ---------- Compteur interne ----------
   function beacon(kind) {
     try {
@@ -50,7 +53,7 @@
         us: attribution.utm_source || '', um: attribution.utm_medium || '',
         uc: attribution.utm_campaign || '',
         c: CLICK_KEYS.filter(function (k) { return !!attribution[k]; })[0] || '',
-        r: refHost(),
+        r: ENTRY_REF,
         qa: QA ? 1 : 0
       });
       if (w.navigator.sendBeacon) {
@@ -130,6 +133,7 @@
     setHidden(f, 'landing_path', PATH);
     setHidden(f, 'ab_variant', VARIANT);
     setHidden(f, 'ab_test', TEST);
+    setHidden(f, 'referrer_host', ENTRY_REF);
   }
 
   function newId() {
@@ -153,9 +157,16 @@
     try { w.dataLayer = w.dataLayer || []; w.dataLayer.push(payload); } catch (_) {}
   }
 
+  var duplicateNotice = false;
   function showError(show) {
     var e = d.getElementById('dc-form-error');
-    if (e) e.hidden = !show;
+    if (e) {
+      if (show && e.firstChild && e.firstChild.nodeType === 3)
+        e.firstChild.nodeValue = duplicateNotice
+          ? 'Une demande avec cette référence a déjà été tentée. Pour vérifier sa réception, appelez-nous au '
+          : 'Nous n’avons pas pu confirmer la réception de votre demande. Veuillez nous appeler au ';
+      e.hidden = !show;
+    }
   }
 
   function focusForm() {
@@ -166,6 +177,7 @@
   }
 
   var sending = false;
+  var lastRequestBody = '', lastRequestId = ''; // mémoire de la page seulement
   function onSubmit(event) {
     var f = form();
     if (!f || event.target !== f) return;
@@ -179,12 +191,15 @@
       if (!el.name || el.disabled || el.type === 'submit' || el.type === 'button') return;
       data[el.name] = String(el.value || '').slice(0, 2000);
     });
-    var eventId = newId();
+    var requestBody = JSON.stringify(data);
+    if (requestBody !== lastRequestBody) { lastRequestBody = requestBody; lastRequestId = newId(); }
+    var eventId = lastRequestId;
     data.event_id = eventId;
     if (QA) data.qa = '1';
     var button = f.querySelector('button[type=submit]');
     sending = true;
     if (button) button.disabled = true;
+    duplicateNotice = false;
     showError(false);
     w.fetch('/api/lead', {
       method: 'POST',
@@ -194,17 +209,26 @@
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) { return { ok: !!(r.ok && j && j.ok), j: j || {} }; });
     }).then(function (res) {
-      if (!res.ok) throw new Error('rejected');
+      duplicateNotice = res.j.error === 'duplicate_request';
+      if (!res.ok || (res.j.accepted !== true && !QA && !res.j.dryRun && !res.j.qa)) throw new Error('rejected');
       var confirmation = d.getElementById('dc-success');
       f.hidden = true;
       if (confirmation) {
+        if (QA || res.j.dryRun || res.j.qa) {
+          var qaTitle = confirmation.querySelector('h3');
+          var qaNote = confirmation.querySelector('p');
+          if (qaTitle) qaTitle.textContent = 'Essai effectué — aucune demande envoyée.';
+          if (qaNote) qaNote.textContent = 'Cet aperçu est en mode essai. Aucun rendez-vous ni message patient n’a été créé.';
+        }
         confirmation.hidden = false;
         confirmation.focus({ preventScroll: true });
         confirmation.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
       // Conversion seulement si le relais de production a accepté (ni robot, ni dry run, ni test interne).
-      if (res.j.accepted === true && !res.j.dryRun && !res.j.qa && !QA) signalSuccess(eventId);
-      if (res.j.accepted === true) track('lead');
+      if (res.j.accepted === true && !res.j.dryRun && !res.j.qa && !QA) {
+        signalSuccess(eventId);
+        track('lead');
+      }
     }).catch(function () {
       showError(true);
       track('lead_error');
@@ -261,3 +285,4 @@
   if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', init, { once: true });
   else init();
 }(window, document));
+

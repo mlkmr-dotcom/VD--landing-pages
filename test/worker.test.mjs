@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { pickVariant, assignVariant, validateLead, buildWebhookJson, sourceOf, localDay } from '../src/worker.js';
 import { twoProportion } from '../src/stats.js';
@@ -27,10 +28,10 @@ test('le cookie garde la même variante; ?dc_variant force sans cookie', () => {
 });
 
 test('validation du formulaire', () => {
-  const ok = validateLead({ 'nom_et_prénom': 'Marie Tremblay', email_: 'marie@example.com', 'numéro_de_téléphone': '(450) 555-1234' });
+  const ok = validateLead({ 'nom_et_prénom': 'Marie Tremblay', email_: 'marie@example.com', 'numéro_de_téléphone': '(450) 555-1234', event_id: 'dcub-test0001' });
   assert.deepEqual(ok.errors, []);
   assert.equal(ok.spam, false);
-  const bad = validateLead({ 'nom_et_prénom': 'M', email_: 'pas-un-courriel', 'numéro_de_téléphone': '123' });
+  const bad = validateLead({ 'nom_et_prénom': 'M', email_: 'pas-un-courriel', 'numéro_de_téléphone': '123', event_id: 'dcub-test0001' });
   assert.deepEqual(bad.errors, ['nom', 'courriel', 'téléphone']);
   assert.equal(validateLead({ website: 'http://spam' }).spam, true);
   assert.equal(validateLead({ 'nom_et_prénom': 'x'.repeat(500) }).clean['nom_et_prénom'].length, 120);
@@ -80,9 +81,31 @@ import worker, { attrSafe } from '../src/worker.js';
 const ctx = { waitUntil() {} };
 const lead = (extra = {}) => new Request('https://chez.votredentisterie.com/api/lead', {
   method: 'POST', headers: { 'content-type': 'application/json' },
-  body: JSON.stringify({ 'nom_et_prénom': 'Test QA', email_: 'qa@example.com', 'numéro_de_téléphone': '4505550100', landing_path: '/', ab_variant: 'a', ...extra })
+  body: JSON.stringify({ 'nom_et_prénom': 'Test QA', email_: 'qa@example.com', 'numéro_de_téléphone': '4505550100', landing_path: '/', ab_variant: 'a', event_id: 'dcub-test0001', ...extra })
 });
 async function withFetch(impl, fn) { const real = globalThis.fetch; globalThis.fetch = impl; try { return await fn(); } finally { globalThis.fetch = real; } }
+
+for (const event_id of [undefined, '', 'schema_reference_only', 'dcub-short', 'wrongprefix-test0001']) {
+  test(`identifiant rejeté avant le relais CRM : ${String(event_id)}`, async () => {
+    let calls = 0;
+    const response = await withFetch(async () => { calls++; return new Response('{}'); },
+      () => worker.fetch(lead({ event_id }), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
+    assert.equal(response.status, 422);
+    assert.deepEqual(await response.json(), { ok: false, error: 'validation', fields: ['event_id'] });
+    assert.equal(calls, 0);
+  });
+}
+
+test('identifiant accepté conservé dans le relais CRM', async () => {
+  let sent;
+  const response = await withFetch(async (_url, options) => {
+    sent = JSON.parse(options.body);
+    return new Response('{}');
+  }, () => worker.fetch(lead({ event_id: 'dcub-12345678-1234-4321-abcd-123456789012' }), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
+  assert.equal(response.status, 200);
+  assert.equal(sent.event_id, 'dcub-12345678-1234-4321-abcd-123456789012');
+  assert.equal((await response.json()).accepted, true);
+});
 
 test('un seul envoi au webhook, même en cas d’échec', async () => {
   let n = 0;
@@ -94,15 +117,79 @@ test('accepted seulement pour le relais de production; jamais pour robot ou dry 
   const ok = await withFetch(async () => new Response('{}'), () => worker.fetch(lead(), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
   assert.deepEqual(await ok.json(), { ok: true, accepted: true, qa: false });
   const qa = await withFetch(async () => new Response('{}'), () => worker.fetch(lead({ qa: '1' }), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
-  assert.deepEqual(await qa.json(), { ok: true, accepted: true, qa: true });
+  assert.deepEqual(await qa.json(), { ok: true, accepted: false, dryRun: true, qa: true });
   let n = 0;
   const spam = await withFetch(async () => { n++; return new Response(''); }, () => worker.fetch(lead({ website: 'x' }), { GHL_WEBHOOK_URL: 'https://hook.test/x' }, ctx));
   assert.deepEqual(await spam.json(), { ok: true, accepted: false }); assert.equal(n, 0);
   const dry = await worker.fetch(lead(), { LEAD_DRY_RUN: '1' }, ctx);
-  assert.deepEqual(await dry.json(), { ok: true, accepted: false, dryRun: true });
+  assert.deepEqual(await dry.json(), { ok: true, accepted: false, dryRun: true, qa: true });
 });
 
 test('attribution : aucune coordonnée personnelle', () => {
   assert.equal(attrSafe('marie@example.com'), false); assert.equal(attrSafe('450-555-1234'), false);
   assert.equal(attrSafe('dentiste iberville'), true); assert.equal(attrSafe('120212345678901234'), true);
+});
+
+
+// Les appels ci-dessous sont tous simulés : aucun contact, webhook réel ou message patient.
+for (const c of [
+  { name: 'dry run avec un secret présent', env: { LEAD_DRY_RUN: '1' } },
+  { name: 'marqueur QA avec un secret présent', extra: { qa: '1' } },
+  { name: 'URL QA avec un secret présent', ref: 'https://preview.test/?dc_qa=1' },
+  { name: 'aperçu de variante avec un secret présent', ref: 'https://preview.test/?dc_variant=b' },
+  ...['?dc_variant','?dc_variant=','?%64c_variant=b','?dc_qa=%31'].map(q=>({name:'aperçu sans valeur ou encodé '+q,ref:'https://chez.votredentisterie.com/'+q}))
+]) {
+  test(c.name + ' ne transmet aucune demande', async () => {
+    let calls = 0;
+    const request = lead(c.extra);
+    if (c.ref) request.headers.set('referer', c.ref);
+    const response = await withFetch(async () => {
+      calls++;
+      return new Response('{}');
+    }, () => worker.fetch(request, { GHL_WEBHOOK_URL: 'https://hook.test/x', ...c.env }, ctx));
+    assert.equal(calls, 0);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { ok: true, accepted: false, dryRun: true, qa: true });
+  });
+}
+test('la validation reste prioritaire en mode dry run', async () => {
+  let calls = 0;
+  const response = await withFetch(async () => { calls++; return new Response('{}'); },
+    () => worker.fetch(lead({ email_: 'invalide' }), { GHL_WEBHOOK_URL: 'https://hook.test/x', LEAD_DRY_RUN: '1' }, ctx));
+  assert.equal(calls, 0);
+  assert.equal(response.status, 422);
+});
+
+// Le numéro de suivi doit être cohérent sur la page, le footer et le secours 404.
+test('numéro HighLevel Iberville sur la page et le secours 404', async () => {
+  const config = JSON.parse(readFileSync(new URL('../src/pages/iberville/page.json', import.meta.url), 'utf8'));
+  assert.deepEqual(config.phone, { display: '450 390-3135', href: 'tel:+14503903135' });
+  const response = await worker.fetch(new Request('https://vd.test/inconnue'), {}, ctx);
+  assert.equal(response.status, 404);
+  const html = await response.text();
+  assert.match(html, /tel:\+14503903135/);
+  assert.doesNotMatch(html, /tel:\+14503460102/);
+});
+
+test('aperçu isolé : scripts et connexions externes bloqués, production inchangée', async () => {
+  const env = { ASSETS: { fetch: async () => new Response('<html>aperçu</html>') } };
+  for (const suffix of ['?dc_qa=1', '?dc_variant=b']) {
+    const response = await worker.fetch(new Request('https://preview.test/' + suffix), env, ctx);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-security-policy'), "script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-src 'none'; object-src 'none'");
+  }
+  const dry = await worker.fetch(new Request('https://preview.test/'), {...env, LEAD_DRY_RUN:'1'}, ctx);
+  assert.ok(dry.headers.get('content-security-policy'));
+  const live = await worker.fetch(new Request('https://chez.votredentisterie.com/'), env, ctx);
+  assert.equal(live.headers.get('content-security-policy'), null);
+});
+
+test('visite dry run exclue même sans marqueur navigateur', async () => {
+  const rows = [], pending = [];
+  const DB = { batch: async () => [], prepare(sql) { return { bind(...values) { return { run: async () => { rows.push(values); } }; } }; } };
+  const request = new Request('https://preview.test/api/e', { method:'POST', headers:{'content-type':'application/json','user-agent':'Recette navigateur'}, body:JSON.stringify({k:'view',p:'/',v:'a',qa:0}) });
+  await worker.fetch(request, {DB, LEAD_DRY_RUN:'1', VISITOR_SALT:'local-salt'}, { waitUntil(p) { pending.push(p); } });
+  await Promise.all(pending);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0][12], 1);
 });

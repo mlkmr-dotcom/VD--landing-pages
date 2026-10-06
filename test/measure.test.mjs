@@ -45,3 +45,16 @@ test('event_id transmis seulement au bon format', () => {
   assert.equal(validateLead({ ...base, event_id: 'dcub-0b6f3c1e-7d2a-4f3e-9a7b-1c2d3e4f5a6b' }).clean.event_id, 'dcub-0b6f3c1e-7d2a-4f3e-9a7b-1c2d3e4f5a6b');
   assert.equal(validateLead({ ...base, event_id: 'x@y.com' }).clean.event_id, '');
 });
+
+
+
+test('Clarity marque les mêmes aperçus, y compris sans valeur ou encodés', async () => {
+  const {default:vm}=await import('node:vm');
+  for(const [search,expected] of [['?dc_variant',true],['?dc_variant=',true],['?%64c_variant=b',true],['?dc_qa=%31',true],['?dc_qa=0',false],['?utm_campaign=dc_variant',false]]){
+    const calls=[],win={location:{search},clarity:(...args)=>calls.push(args)};
+    const doc={cookie:'',createElement:()=>({}),getElementsByTagName:()=>[{parentNode:{insertBefore(){}}}]};
+    const code=measureHead({measure:{clarity:'abc123xyz'},test:'fictive-test',variant:'a',pagePath:'/'}).replace(/^<script>\s*|\s*<\/script>$/g,'');
+    vm.runInNewContext(code,{window:win,document:doc,URLSearchParams},{timeout:1000});
+    assert.equal(calls.some(a=>a[0]==='set'&&a[1]==='qa'&&a[2]==='1'),expected,search);
+  }
+});

@@ -2,6 +2,7 @@
 // Rôles : 1) A/B testing par cookie ; 2) relais du formulaire vers le webhook HighLevel ;
 // 3) compteur interne (visites, visiteurs, demandes, clics) ; 4) redirections ; 5) tableau de bord /stats.
 import { ensureSchema } from './schema.js';
+import { claimReceipt, finishReceipt } from './receipt.js';
 import { PAGES, ALIASES, REDIRECTS, BOT_UA, EVENT_KINDS, SITE, STATIC_PAGES } from './config.js';
 import { renderStats } from './stats.js';
 
@@ -78,6 +79,14 @@ export function assignVariant(request, url, page) {
   return { variant: pickVariant(weights), setCookie: true, forced: false };
 }
 
+// L’aperçu est isolé des plateformes de mesure, indépendamment des balises GTM publiées.
+function isolatedPreview(request, env) {
+  const url = new URL(request.url);
+  let refIsPreview = false;
+  try { const ref = new URL(request.headers.get('referer')); refIsPreview = ref.searchParams.get('dc_qa') === '1' || ref.searchParams.has('dc_variant'); } catch (_) {}
+  return url.hostname !== SITE.host || env.LEAD_DRY_RUN === '1' || url.searchParams.get('dc_qa') === '1' || url.searchParams.has('dc_variant') || refIsPreview;
+}
+
 async function servePage(request, env, url, path) {
   if (request.method !== 'GET' && request.method !== 'HEAD') return new Response(null, { status: 405 });
   const page = PAGES[path];
@@ -94,6 +103,9 @@ async function servePage(request, env, url, path) {
     'referrer-policy': 'strict-origin-when-cross-origin',
     'x-content-type-options': 'nosniff'
   });
+  if (isolatedPreview(request, env)) {
+    headers.set('content-security-policy', "script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-src 'none'; object-src 'none'");
+  }
   if (setCookie) {
     headers.append('set-cookie', `${page.test.cookie}=${variant}; Path=/; Max-Age=${ONE_MONTH}; Secure; SameSite=Lax`);
   }
@@ -106,7 +118,7 @@ const FIELD_LIMITS = {
   'message__comment_pouvonsnous_vous_aider_': 2000,
   utm_source: 250, utm_medium: 250, utm_campaign: 250, utm_content: 250, utm_term: 250,
   gclid: 250, gbraid: 250, wbraid: 250, fbclid: 250, msclkid: 250,
-  landing_path: 100, ab_variant: 10, ab_test: 60,
+  landing_path: 100, ab_variant: 10, ab_test: 60, referrer_host: 253,
   // Identifiant de la demande (aussi ID de transaction de la conversion Ads) : relie navigateur, Ads, GA4 et HighLevel.
   event_id: 80
 };
@@ -133,6 +145,9 @@ export function validateLead(input) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean['email_'])) errors.push('courriel');
   const digits = clean['numéro_de_téléphone'].replace(/\D/g, '');
   if (digits.length < 10 || digits.length > 15) errors.push('téléphone');
+  // Le raccord CRM rejette une demande sans cet identifiant. Ne pas annoncer
+  // un succès lorsque le workflow ne peut pas traiter la soumission.
+  if (!clean.event_id) errors.push('event_id');
   return { clean, errors, spam: typeof input.website === 'string' && input.website.trim() !== '' };
 }
 
@@ -199,20 +214,32 @@ async function handleLead(request, env, ctx, url) {
     variant: page.test.weights[clean.ab_variant] !== undefined ? clean.ab_variant : '',
     us: clean.utm_source, um: clean.utm_medium, uc: clean.utm_campaign,
     c: ['gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid'].find((k) => clean[k]) || '',
-    qa: input.qa === '1' || /(?:^|[?&])(?:dc_qa=1|dc_variant=)/.test(request.headers.get('referer') || '') ? 1 : 0
+    r: clean.referrer_host,
+    qa: input.qa === '1' || isolatedPreview(request, env) ? 1 : 0
   });
 
   // Robot : réponse neutre, aucune conversion côté navigateur.
   if (spam) { ctx.waitUntil(record(env, { ...ev, kind: 'lead_spam' })); return json({ ok: true, accepted: false }); }
   if (errors.length) return json({ ok: false, error: 'validation', fields: errors }, 422);
 
+  // Les essais internes restent isolés même quand le secret de production existe.
+  // Garder ce garde-fou avant tout accès au webhook : aucun contact ni message patient.
+  if (env.LEAD_DRY_RUN === '1' || ev.qa === 1) {
+    ctx.waitUntil(record(env, { ...ev, kind: 'lead_dry_run', qa: 1 }));
+    return json({ ok: true, accepted: false, dryRun: true, qa: true });
+  }
+
   if (!env.GHL_WEBHOOK_URL) {
-    if (env.LEAD_DRY_RUN === '1') {
-      ctx.waitUntil(record(env, { ...ev, kind: 'lead_dry_run', qa: 1 }));
-      return json({ ok: true, accepted: false, dryRun: true });
-    }
     ctx.waitUntil(record(env, { ...ev, kind: 'lead_error' }));
     return json({ ok: false, error: 'not_configured' }, 503);
+  }
+
+  // Référence réservée une seule fois, avant le relais, même après un échec ambigu.
+  const guard = env.DEDUPE_REQUIRED === '1';
+  if (guard) {
+    try {
+      if (!await claimReceipt(env.DB,clean.event_id)) return json({ok:false,error:'duplicate_request'},409);
+    } catch (_) { return json({ok:false,error:'receipt_unavailable'},503); }
   }
 
   const meta = {
@@ -232,6 +259,10 @@ async function handleLead(request, env, ctx, url) {
     });
     status = r.status; ok = r.ok;
   } catch (e) { status = 0; }
+  if (guard) {
+    try { await finishReceipt(env.DB,clean.event_id,ok?'accepted':status===0?'uncertain':'rejected'); }
+    catch (_) { /* pending reste réservé; aucun renvoi automatique. */ }
+  }
   ctx.waitUntil(record(env, { ...ev, kind: ok ? 'lead' : 'lead_error' }));
   if (!ok) {
     console.error('ghl_webhook_failed', status);
@@ -251,7 +282,7 @@ async function handleEvent(request, env, ctx) {
   const ev = baseEvent(request, {
     page: input.p, test: page.test.id,
     variant: page.test.weights[input.v] !== undefined ? input.v : '',
-    us: input.us, um: input.um, uc: input.uc, c: input.c, r: input.r, qa: input.qa ? 1 : 0
+    us: input.us, um: input.um, uc: input.uc, c: input.c, r: input.r, qa: input.qa || isolatedPreview(request, env) ? 1 : 0
   });
   ctx.waitUntil(record(env, { ...ev, kind: input.k }));
   return new Response(null, { status: 204 });
@@ -322,6 +353,6 @@ function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 }
 function notFound() {
-  return new Response(`<!doctype html><html lang="fr-CA"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page introuvable | Votre Dentisterie</title><body style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:15vh auto;padding:0 16px;color:#2F3342"><h1 style="color:#565B6E">Page introuvable</h1><p>Cette page n'existe plus. Visitez <a href="https://www.votredentisterie.com/">votredentisterie.com</a> ou appelez-nous au <a href="tel:+14503460102">450 346-0102</a>.</p></body></html>`,
+  return new Response(`<!doctype html><html lang="fr-CA"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page introuvable | Votre Dentisterie</title><body style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:15vh auto;padding:0 16px;color:#2F3342"><h1 style="color:#565B6E">Page introuvable</h1><p>Cette page n'existe plus. Visitez <a href="https://www.votredentisterie.com/">votredentisterie.com</a> ou appelez-nous au <a href="tel:+14503903135">450 390-3135</a>.</p></body></html>`,
     { status: 404, headers: { 'content-type': 'text/html; charset=utf-8', 'x-robots-tag': 'noindex' } });
 }
