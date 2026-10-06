@@ -169,6 +169,7 @@
   }
 
   var sending = false;
+  var lastRequestBody = '', lastRequestId = ''; // mémoire de la page seulement
   function onSubmit(event) {
     var f = form();
     if (!f || event.target !== f) return;
@@ -182,7 +183,9 @@
       if (!el.name || el.disabled || el.type === 'submit' || el.type === 'button') return;
       data[el.name] = String(el.value || '').slice(0, 2000);
     });
-    var eventId = newId();
+    var requestBody = JSON.stringify(data);
+    if (requestBody !== lastRequestBody) { lastRequestBody = requestBody; lastRequestId = newId(); }
+    var eventId = lastRequestId;
     data.event_id = eventId;
     if (QA) data.qa = '1';
     var button = f.querySelector('button[type=submit]');
@@ -197,6 +200,11 @@
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) { return { ok: !!(r.ok && j && j.ok), j: j || {} }; });
     }).then(function (res) {
+      if (res.j.error === 'duplicate_request') {
+        var errorNode = d.getElementById('dc-form-error');
+        if (errorNode && errorNode.firstChild && errorNode.firstChild.nodeType === 3)
+          errorNode.firstChild.nodeValue = 'Une demande avec cette référence a déjà été tentée. Pour vérifier sa réception, appelez-nous au ';
+      }
       if (!res.ok || (res.j.accepted !== true && !QA && !res.j.dryRun && !res.j.qa)) throw new Error('rejected');
       var confirmation = d.getElementById('dc-success');
       f.hidden = true;
